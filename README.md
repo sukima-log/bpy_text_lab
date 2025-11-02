@@ -73,7 +73,7 @@ Git Root
 
 このリポジトリに含まれる **「SAMPLE_MODEL」** から生成できるサンプルモデルを以下で確認できます。
 
-👉 [サンプルモデルを表示する](https://sukima-log.github.io/Pages_bpy_text_lab_sample/)
+👉 [サンプルモデルを表示する](https://sukima-log.github.io/Pages_bpy-text-lab_sample/)
 （作成できる3Dモデルの例を確認できます）
 
 
