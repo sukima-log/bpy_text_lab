@@ -9,10 +9,8 @@ git_root = subprocess.run(
     stdout=subprocess.PIPE, text=True
 ).stdout.strip()
 # Add the parent directory of the root to sys.path
-if git_root:
-    parent = os.path.dirname(git_root)
-    if parent not in sys.path:
-        sys.path.append(parent)
+if git_root and git_root not in sys.path:
+    sys.path.append(git_root)
 # Common Setting
-from bpy_text_lab.Common.common_top import *
+from Common.common_top import *
 #========================================================================================

@@ -9,13 +9,11 @@ git_root = subprocess.run(
     stdout=subprocess.PIPE, text=True
 ).stdout.strip()
 # Add the parent directory of the root to sys.path
-if git_root:
-    parent = os.path.dirname(git_root)
-    if parent not in sys.path:
-        sys.path.append(parent)
+if git_root and git_root not in sys.path:
+    sys.path.append(git_root)
 # Common Setting
-import bpy_text_lab.Common.common_top as common_top
-from bpy_text_lab.Common.common_top import *
+import Common.common_top as common_top
+from Common.common_top import *
 # Reload Files
 common_top._auto_reload_modules([mm_cm_lib, mdl_cm_lib, mtal_cm_lib, ani_cm_lib, common_top])
 #========================================================================================
@@ -23,10 +21,10 @@ common_top._auto_reload_modules([mm_cm_lib, mdl_cm_lib, mtal_cm_lib, ani_cm_lib,
 # ==================================================================
 # = Pre Process
 # ==================================================================
-from bpy_text_lab.Assets.mdl.{$PROJECT_NAME} import (
+from Assets.mdl.{$PROJECT_NAME} import (
     glb, wrap, d00_mdl, d01_uv_unwrap, d02_mtal, d03_bake, d04_bone, d05_animation, d06_shape_key
 )
-from bpy_text_lab.Assets.parts import (
+from Assets.parts import (
     model, material
 )
 # 環境初期化
@@ -46,8 +44,6 @@ override_common = mm_cm_lib.bpy_modeling_initialize_common(
     ]               # Reload Dir/File
 ,   rm_flg=False    # Object Delete Disable
 )
-# 処理対象オブジェクト特定
-glb.glb.glb_require_new_objects()
 
 # ==================================================================
 # = ▼ Instance
@@ -72,6 +68,11 @@ if (glb.glb.glb_exist_obj_chk(obj_list=[glb.glb.base_light], gen_flag=True)):
     # 半径設定
     bpy.context.object.data.shadow_soft_size = 10
 
+# アクティブオブジェクト
+mdl_cm_lib.active_object_select(
+    object_name_list=[glb.glb.base_light]
+)
+
 # --------------------------------
 # sample_obj 作成 & 配置
 # --------------------------------
@@ -80,7 +81,9 @@ object_list=[
 ]
 # オブジェクト作成
 if (mm_cm_lib.require_new_objects(obj_list=object_list, rm_flag=False)):
-    wrap.sample_obj_wrap.sample_obj_wrap()
+    wrap.sample_obj_wrap.sample_obj_wrap(
+        obj_name=object_list[0]
+    )
 # コレクション作成+格納
 mm_cm_lib.collection_create_or_move(
     object_list=object_list

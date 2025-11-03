@@ -3,7 +3,11 @@
 #------------------------------------------------
 # [[obj_name1, obj_name2, ...], True/False] のリスト形式
 #  True: 全て存在, False: 存在しないものがある
-EXIST_FLAG_LIST = []
+# グローバル存在フラグ辞書
+EXIST_FLAG_DICT = {}
+
+def reset_exist_flag_dict():
+    EXIST_FLAG_DICT.clear()  # 中身だけ空にする
 
 #------------------------------------------------
 # Global Parameter
@@ -27,98 +31,89 @@ MT_SAMPLE       = "MT_SAMPLE"
 # Animation/Action
 #------------------------------------------------
 
-#------------------------------------------------
-# Generation Flag
-#------------------------------------------------
-def glb_require_new_objects(
-    obj_list=[]
-,   flg_name="flg_name"
-):
-    if (len(obj_list) == 0):
-        return
-    else:
-        if  (flg_name == "sample_obj_flg_judge"):
-            global sample_obj_flg_judge
-            sample_obj_flg_judge = \
-            mm_cm_lib.require_new_objects(
-                obj_list=obj_list
-            ,   gen_flag=False
-            )
 
 #------------------------------------------------
 # Object Existence Check
 #------------------------------------------------
-def glb_exist_obj_chk(
-    obj_list=["object_name"],   # Object Name List
-    gen_flag=False              # オブジェクト生成タイミングフラグ
-):
+def glb_exist_obj_chk(obj_list=["object_name"], gen_flag=False):
     """
-    指定したオブジェクト群が既に存在するかどうかを確認し、
-    生成前と生成後で異なる動作を行う。
-
-    Parameters
-    ----------
-    obj_list : list[str]
-        対象となるオブジェクト名のリスト
-    gen_flag : bool
-        True  の場合 → 生成直後の存在確認（初期登録）
-        False の場合 → 生成前に存在していたかの確認（後判定）
-
-    Returns
-    -------
-    bool
-        True  → 新規生成 or 変形処理が必要
-        False → 既存利用または変形不要
+    Blender内のオブジェクト + ボーン存在確認 + 必要に応じ全削除 / 辞書管理
+    - obj_list のどれか1つでも存在しなければ obj_list 内全削除
+    - gen_flag に応じて辞書の参照/更新
     """
 
-    # -----------------------------------------------------------
-    # グローバルリスト（存在フラグ記録用）
-    # -----------------------------------------------------------
-    exist_flag_list = EXIST_FLAG_LIST
+    global EXIST_FLAG_DICT
 
-    # -----------------------------------------------------------
-    # 内部ヘルパー: オブジェクトの存在確認
-    # -----------------------------------------------------------
-    def all_exist(obj_names):
-        """すべてのオブジェクトが存在しているか"""
-        for name in obj_names:
-            obj = bpy.data.objects.get(name)
-            if obj is None or name not in bpy.context.scene.objects:
-                return False
-        return True
+    # --- ヘルパー関数 ---
+    def object_exists(name):
+        """オブジェクト（メッシュ/Empty/アーマチュア）が存在するか"""
+        return bpy.data.objects.get(name) is not None
 
-    # -----------------------------------------------------------
-    # - gen_flag = True  → オブジェクト生成直後に存在確認
-    # -----------------------------------------------------------
-    if gen_flag:
-        all_exists = all_exist(obj_list)
-        exist_flag_list.append([obj_list, all_exists])
+    def bone_exists(name):
+        """ボーンが存在するか（すべてのアーマチュアを探索）"""
+        for obj in bpy.data.objects:
+            if obj.type == 'ARMATURE' and obj.data.bones.get(name):
+                return True
+        return False
 
-        if all_exists:
-            # すでに全て存在 → 新規生成不要
-            return False
+    def delete_object_or_bone(name):
+        """オブジェクトまたはボーンを削除"""
+        obj = bpy.data.objects.get(name)
+        if obj:
+            # 子オブジェクトも再帰削除
+            for child in obj.children[:]:
+                delete_object_or_bone(child.name)
+            bpy.data.objects.remove(obj, do_unlink=True)
         else:
-            # 存在していないものがある → 新規生成が必要
+            # ボーン削除（アーマチュア内）
+            for arm in [o for o in bpy.data.objects if o.type == 'ARMATURE']:
+                if name in arm.data.bones:
+                    # ボーン削除には編集モード切替が必要
+                    bpy.context.view_layer.objects.active = arm
+                    bpy.ops.object.mode_set(mode='EDIT')
+                    eb = arm.data.edit_bones.get(name)
+                    if eb:
+                        arm.data.edit_bones.remove(eb)
+                    bpy.ops.object.mode_set(mode='OBJECT')
+
+    # --- 存在チェック ---
+    exist_flags = []
+    for name in obj_list:
+        if object_exists(name):
+            exist_flags.append(True)
+        elif bone_exists(name):
+            exist_flags.append(True)
+        else:
+            exist_flags.append(False)
+
+    # --- gen_flag = True の場合 ---
+    if gen_flag:
+        # obj_list の全部分集合を辞書登録
+        for r in range(1, len(obj_list) + 1):
+            for combo in combinations(obj_list, r):
+                EXIST_FLAG_DICT[combo] = all(
+                    (object_exists(n) or bone_exists(n)) for n in combo
+                )
+
+        # どれか1つでも存在しなければ True（生成フラグ）
+        if not all(exist_flags):
+            # 存在しない場合、obj_list 全削除
+            for name in obj_list:
+                delete_object_or_bone(name)
+            return True
+        else:
+            return False
+
+    # --- gen_flag = False の場合 ---
+    else:
+        key = tuple(obj_list)
+        if key in EXIST_FLAG_DICT:
+            if EXIST_FLAG_DICT[key]:
+                return False  # すでに存在していた
+            else:
+                return True   # 再生成されたので編集対象
+        else:
             return True
 
-    # -----------------------------------------------------------
-    # - gen_flag = False → 生成処理前に存在していたか確認
-    # -----------------------------------------------------------
-    else:
-        # EXIST_FLAG_LIST から obj_list に一致する要素を探す
-        for rec in exist_flag_list:
-            if rec[0] == obj_list:
-                # False → 以前存在しなかった → 変形処理必要
-                if rec[1] is False:
-                    return True
-                # True → 以前存在していた → 変形処理不要
-                else:
-                    return False
 
-        # 該当記録なし → 存在確認して登録
-        all_exists = all_exist(obj_list)
-        exist_flag_list.append([obj_list, all_exists])
-
-        # 存在しなければ変形必要、存在していれば不要
-        return not all_exists
 

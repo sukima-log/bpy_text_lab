@@ -53,6 +53,7 @@ Git Root
 │   └── mtal_cm_lib.py                      // マテリアル/テクスチャ用共通関数とりまとめ用
 ├── Output                              // モデルの出力用
 │   └── exports
+├── PROMPTS.md                          // 生成AI用のプロンプト保存場所 (フリースペース)
 ├── README.md                           // このREADMEファイル
 ├── requirements.txt
 ├── Setting                             // Blenderの設定ファイルなど保存用 (任意)
@@ -197,9 +198,7 @@ Tools/Export/export_glb_gltf.py
 
 | Version | Date       | Type    | Description                          | Author |
 |---------|------------|---------|--------------------------------------|-----------|
-| 0.1   | 2025-11-01 | Added   | 初回リリース <br/> テンプレート追加 | sukimalog.com |
-| 0.11   | 2025-11-02 | Added | 参考画像読み込み関数追加 <br /> image_reference_import | sukimalog.com |
-| 0.12   | 2025-11-02 | Modify   | サンプル動作確認ミス <br /> 修正済 | sukimalog.com |
+| 0.1   | 2025-11-03 | Added   | 動作確認版 | sukimalog.com |
 | x.x.x   | xxxx-xx-xx | xxxxx   | xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx | |
 | x.x.x   | xxxx-xx-xx | xxxxx   | xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx | |
 

@@ -23,6 +23,7 @@ import time
 import json
 import pkgutil
 import subprocess
+from itertools import combinations
 #------------------------------------------------------------------
 # = Set Path
 #------------------------------------------------------------------
@@ -35,13 +36,11 @@ git_root = subprocess.run(
     stdout=subprocess.PIPE, text=True
 ).stdout.strip()
 # Add the parent directory of the root to sys.path
-if git_root:
-    parent = os.path.dirname(git_root)
-    if parent not in sys.path:
-        sys.path.append(parent)
+if git_root and git_root not in sys.path:
+    sys.path.append(git_root)
 
 # Common Lib
-from bpy_text_lab.Mylib import  (
+from Mylib import  (
     mdl_cm_lib
 ,   mtal_cm_lib
 ,   mm_cm_lib
@@ -62,6 +61,11 @@ def get_latest_mtime_in_dir(directory):
     return latest_mtime
 
 def _auto_reload_modules(modules):
+    """
+    モジュールリストを再帰的にリロード。
+    - サブパッケージも深さ無制限で再帰的に処理
+    - 未インポートのサブモジュールも import してリロード
+    """
     this_mod = sys.modules[__name__]
     if not hasattr(this_mod, "_file_mtimes"):
         this_mod._file_mtimes = {}
@@ -80,14 +84,25 @@ def _auto_reload_modules(modules):
             importlib.reload(mod)
             this_mod._file_mtimes[path] = mtime
 
-    for mod in modules:
+    def recursive_reload(mod):
+        """モジュールとサブパッケージを再帰的にリロード"""
         reload_if_changed(mod)
 
-        # If it's a package, also reload its submodules
-        if hasattr(mod, "__path__"):  
+        if hasattr(mod, "__path__"):  # パッケージの場合のみサブモジュール探索
             for _, subname, ispkg in pkgutil.walk_packages(mod.__path__, mod.__name__ + "."):
-                if subname in sys.modules:
-                    reload_if_changed(sys.modules[subname])
+                # sys.modules に存在するか確認
+                sub_mod = sys.modules.get(subname)
+                if not sub_mod:
+                    try:
+                        sub_mod = importlib.import_module(subname)
+                    except Exception as e:
+                        print(f"Failed to import {subname}: {e}")
+                        continue
+                # サブモジュールも再帰
+                recursive_reload(sub_mod)
+
+    for mod in modules:
+        recursive_reload(mod)
 #------------------------------------------------------------------
 # = Pre Process
 #------------------------------------------------------------------

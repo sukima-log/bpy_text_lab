@@ -9,20 +9,18 @@ git_root = subprocess.run(
     stdout=subprocess.PIPE, text=True
 ).stdout.strip()
 # Add the parent directory of the root to sys.path
-if git_root:
-    parent = os.path.dirname(git_root)
-    if parent not in sys.path:
-        sys.path.append(parent)
+if git_root and git_root not in sys.path:
+    sys.path.append(git_root)
 # Common Setting
-from bpy_text_lab.Common.common_top import *
+from Common.common_top import *
 #========================================================================================
 # ==================================================================
 # = Pre Process
 # ==================================================================
-from bpy_text_lab.Assets.mdl.SAMPLE_MODEL import (
+from Assets.mdl.SAMPLE_MODEL import (
     glb, wrap, d00_mdl, d01_uv_unwrap, d02_mtal, d03_bake, d04_bone, d05_animation, d06_shape_key
 )
-from bpy_text_lab.Assets.parts import (
+from Assets.parts import (
     model, material
 )
 # ==================================================================
@@ -397,7 +395,7 @@ def sukima_logo_mdl(
 def sukima_logo_duplicate(
     sukima_logo=glb.glb.sukima_logo
 ):
-    if (glb.glb.glb_exist_obj_chk(obj_list=[sukima_logo], gen_flag=False)):
+    if (glb.glb.glb_exist_obj_chk(obj_list=[sukima_logo])):
         obj_name=sukima_logo
         # Mode切り替え
         bpy.ops.object.mode_set(mode='OBJECT')

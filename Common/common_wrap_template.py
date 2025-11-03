@@ -1,10 +1,10 @@
 # ==================================================================
 # = Pre Process
 # ==================================================================
-from bpy_text_lab.Assets.mdl.{$PROJECT_NAME} import (
+from Assets.mdl.{$PROJECT_NAME} import (
     glb, wrap, d00_mdl, d01_uv_unwrap, d02_mtal, d03_bake, d04_bone, d05_animation, d06_shape_key
 )
-from bpy_text_lab.Assets.parts import (
+from Assets.parts import (
     model, material
 )
 # ==================================================================
@@ -13,11 +13,13 @@ from bpy_text_lab.Assets.parts import (
 # --------------------------------
 # SAMPLE 作成 & 配置
 # --------------------------------
-def sample_obj_wrap():
+def sample_obj_wrap(
+    obj_name:str
+):
     # --------------------------------
     # Create Model (メッシュ)
     # --------------------------------
-    d00_mdl.sample_obj_mdl.sample_obj_mdl()
+    d00_mdl.sample_obj_mdl.sample_obj_mdl(obj_name=obj_name)
     # --------------------------------
     # UV_unwrap (シーム, UV展開)
     # --------------------------------

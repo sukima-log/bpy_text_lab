@@ -32,8 +32,6 @@ from bpy_text_lab.Assets.parts import (
 # SAMPLE 作成 & 配置
 # --------------------------------
 def sukima_logo_wrap(
-#     glb.glb.sukima_logo
-# ,   glb.glb.sukima_logo_bone
 ):
     # --------------------------------
     # Create Model (メッシュ)
