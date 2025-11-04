@@ -17,7 +17,7 @@ from Assets.parts import (
 def sample_obj_mdl(
     obj_name
 ):
-    if (glb.glb.glb_exist_obj_chk(obj_list=[obj_name], gen_flag=True)):
+    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[obj_name], EXIST_FLAG_DICT=glb.glb.EXIST_FLAG_DICT, gen_flag=True)):
         # オブジェクト追加
         bpy.ops.mesh.primitive_cube_add(
             size=1                  # 1辺長

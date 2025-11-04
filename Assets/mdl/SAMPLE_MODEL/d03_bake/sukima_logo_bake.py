@@ -29,7 +29,7 @@ from Assets.parts import (
 def sukima_logo_bake(
     sukima_logo=glb.glb.sukima_logo
 ):
-    if (glb.glb.glb_exist_obj_chk(obj_list=[sukima_logo], gen_flag=False)):
+    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[sukima_logo], EXIST_FLAG_DICT=glb.glb.EXIST_FLAG_DICT, gen_flag=False)):
         obj_name=sukima_logo
         # ビューへ切り替え
         mdl_cm_lib.change_preview(key="MATERIAL")

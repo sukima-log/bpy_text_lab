@@ -30,7 +30,7 @@ def sukima_logo_animation(
     sukima_logo=glb.glb.sukima_logo
 ,   sukima_logo_bone=glb.glb.sukima_logo_bone
 ):
-    if (glb.glb.glb_exist_obj_chk(obj_list=[sukima_logo_bone])):
+    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[sukima_logo_bone], EXIST_FLAG_DICT=glb.glb.EXIST_FLAG_DICT)):
         obj_name=sukima_logo
         obj_bone_name=sukima_logo_bone
         # Mode切り替え

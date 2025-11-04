@@ -52,7 +52,7 @@ override_common = mm_cm_lib.bpy_modeling_initialize_common(
 # --------------------------------
 # Base Light 作成 & 配置
 # --------------------------------
-if (glb.glb.glb_exist_obj_chk(obj_list=[glb.glb.base_light], gen_flag=True)):
+if (mm_cm_lib.glb_exist_obj_chk(obj_list=[glb.glb.base_light], EXIST_FLAG_DICT=glb.glb.EXIST_FLAG_DICT, gen_flag=True)):
     # ポイントライト追加
     bpy.ops.object.light_add(
         type='POINT'

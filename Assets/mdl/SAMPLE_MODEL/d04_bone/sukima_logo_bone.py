@@ -51,7 +51,7 @@ def sukima_logo_bone(
         # ----------------------------------
         # 手動 ボーン設定 (リギング)
         # ----------------------------------
-        if (glb.glb.glb_exist_obj_chk(obj_list=[obj_bone_name], gen_flag=True)):
+        if (mm_cm_lib.glb_exist_obj_chk(obj_list=[obj_bone_name], EXIST_FLAG_DICT=glb.glb.EXIST_FLAG_DICT, gen_flag=True)):
             # ボーン 追加
             bpy.ops.object.armature_add(
                 enter_editmode=False
@@ -339,7 +339,7 @@ def sukima_logo_bone(
         #----------------------------------
         # Rigify ボーン設定 (リギング)
         #----------------------------------
-        if (glb.glb.glb_exist_obj_chk(obj_list=[obj_bone_name], gen_flag=True)):
+        if (mm_cm_lib.glb_exist_obj_chk(obj_list=[obj_bone_name], EXIST_FLAG_DICT=glb.glb.EXIST_FLAG_DICT, gen_flag=True)):
             # Addon 有効化: Rigify 
             mm_cm_lib.enable_add_on(addon_name="rigify")
             # ボーン 追加

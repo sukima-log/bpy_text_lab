@@ -29,7 +29,7 @@ from Assets.parts import (
 def sukima_logo_uv_unwrap(
     sukima_logo=glb.glb.sukima_logo
 ):
-    if (glb.glb.glb_exist_obj_chk(obj_list=[sukima_logo])):
+    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[sukima_logo], EXIST_FLAG_DICT=glb.glb.EXIST_FLAG_DICT)):
         # ビューへ切り替え
         mdl_cm_lib.change_preview(key="MATERIAL")
         # Mode切り替え

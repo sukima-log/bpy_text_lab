@@ -32,7 +32,7 @@ from Assets.parts import (
 def sukima_logo_mdl(
     sukima_logo=glb.glb.sukima_logo
 ):
-    if (glb.glb.glb_exist_obj_chk(obj_list=[sukima_logo], gen_flag=True)):
+    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[sukima_logo], EXIST_FLAG_DICT=glb.glb.EXIST_FLAG_DICT, gen_flag=True)):
         # オブジェクト追加
         bpy.ops.mesh.primitive_cube_add(
             size=1                  # 1辺長
@@ -395,7 +395,7 @@ def sukima_logo_mdl(
 def sukima_logo_duplicate(
     sukima_logo=glb.glb.sukima_logo
 ):
-    if (glb.glb.glb_exist_obj_chk(obj_list=[sukima_logo])):
+    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[sukima_logo], EXIST_FLAG_DICT=glb.glb.EXIST_FLAG_DICT)):
         obj_name=sukima_logo
         # Mode切り替え
         bpy.ops.object.mode_set(mode='OBJECT')
