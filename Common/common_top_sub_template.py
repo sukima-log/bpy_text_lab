@@ -12,5 +12,6 @@ git_root = subprocess.run(
 if git_root and git_root not in sys.path:
     sys.path.append(git_root)
 # Common Setting
+import Common.common_top as common_top
 from Common.common_top import *
 #========================================================================================

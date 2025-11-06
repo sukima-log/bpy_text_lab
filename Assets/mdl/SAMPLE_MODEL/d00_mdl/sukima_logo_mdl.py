@@ -12,17 +12,18 @@ git_root = subprocess.run(
 if git_root and git_root not in sys.path:
     sys.path.append(git_root)
 # Common Setting
+import Common.common_top as common_top
 from Common.common_top import *
 #========================================================================================
 # ==================================================================
 # = Pre Process
 # ==================================================================
-from Assets.mdl.SAMPLE_MODEL import (
-    glb, wrap, d00_mdl, d01_uv_unwrap, d02_mtal, d03_bake, d04_bone, d05_animation, d06_shape_key
-)
-from Assets.parts import (
-    model, material
-)
+modules = common_top.import_submodules(f"Assets.mdl.SAMPLE_MODEL") 
+parts = common_top.import_submodules("Assets.parts")
+
+globals().update(modules)
+globals().update(parts)
+
 # ==================================================================
 # = Modeling
 # ==================================================================
@@ -30,9 +31,9 @@ from Assets.parts import (
 # Modeling
 #-------------------------------
 def sukima_logo_mdl(
-    sukima_logo=glb.glb.sukima_logo
+    sukima_logo=glb.glb_defs.sukima_logo
 ):
-    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[sukima_logo], EXIST_FLAG_DICT=glb.glb.EXIST_FLAG_DICT, gen_flag=True)):
+    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[sukima_logo], EXIST_FLAG_DICT=glb.glb_defs.EXIST_FLAG_DICT, gen_flag=True)):
         # オブジェクト追加
         bpy.ops.mesh.primitive_cube_add(
             size=1                  # 1辺長
@@ -44,9 +45,9 @@ def sukima_logo_mdl(
         # サイズ変更
         bpy.ops.transform.resize(
             value=(
-                glb.glb.GP_CUBE_SIZE
-            ,   glb.glb.GP_CUBE_SIZE
-            ,   glb.glb.GP_CUBE_SIZE
+                glb.glb_defs.GP_CUBE_SIZE
+            ,   glb.glb_defs.GP_CUBE_SIZE
+            ,   glb.glb_defs.GP_CUBE_SIZE
             )
         ,   orient_type='GLOBAL'
         )
@@ -64,11 +65,11 @@ def sukima_logo_mdl(
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_mode(type='EDGE')
         # 変数
-        line_width_0p1  = glb.glb.GP_CUBE_SIZE/150  # ライン幅
-        line_width_0    = glb.glb.GP_CUBE_SIZE/40   # ライン幅
-        line_width_1    = glb.glb.GP_CUBE_SIZE/30   # ライン幅
-        line_width_2    = glb.glb.GP_CUBE_SIZE/20   # ライン幅
-        bump_value      = glb.glb.GP_CUBE_SIZE/100  # 面 移動 値
+        line_width_0p1  = glb.glb_defs.GP_CUBE_SIZE/150  # ライン幅
+        line_width_0    = glb.glb_defs.GP_CUBE_SIZE/40   # ライン幅
+        line_width_1    = glb.glb_defs.GP_CUBE_SIZE/30   # ライン幅
+        line_width_2    = glb.glb_defs.GP_CUBE_SIZE/20   # ライン幅
+        bump_value      = glb.glb_defs.GP_CUBE_SIZE/100  # 面 移動 値
         #----------------------------------------
         # 縁
         #----------------------------------------
@@ -393,25 +394,25 @@ def sukima_logo_mdl(
 # Duplicate
 #-------------------------------
 def sukima_logo_duplicate(
-    sukima_logo=glb.glb.sukima_logo
+    sukima_logo=glb.glb_defs.sukima_logo
 ):
-    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[sukima_logo], EXIST_FLAG_DICT=glb.glb.EXIST_FLAG_DICT)):
+    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[sukima_logo], EXIST_FLAG_DICT=glb.glb_defs.EXIST_FLAG_DICT)):
         obj_name=sukima_logo
         # Mode切り替え
         bpy.ops.object.mode_set(mode='OBJECT')
         x_l=[
             0
         ,   0
-        ,   +(glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE/20))
-        ,   +(glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE/20) + glb.glb.GP_CUBE_SIZE)
-        ,   -(glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE/20))
-        ,   -(glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE/20) + glb.glb.GP_CUBE_SIZE)
-        ,   +(glb.glb.GP_CUBE_SIZE/2 + (glb.glb.GP_CUBE_SIZE/40))
-        ,   +(glb.glb.GP_CUBE_SIZE/2 + (glb.glb.GP_CUBE_SIZE/40))
-        ,   +(glb.glb.GP_CUBE_SIZE/2 + (glb.glb.GP_CUBE_SIZE/40))
-        ,   -(glb.glb.GP_CUBE_SIZE/2 + (glb.glb.GP_CUBE_SIZE/40))
-        ,   -(glb.glb.GP_CUBE_SIZE/2 + (glb.glb.GP_CUBE_SIZE/40))
-        ,   -(glb.glb.GP_CUBE_SIZE/2 + (glb.glb.GP_CUBE_SIZE/40))
+        ,   +(glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE/20))
+        ,   +(glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE/20) + glb.glb_defs.GP_CUBE_SIZE)
+        ,   -(glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE/20))
+        ,   -(glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE/20) + glb.glb_defs.GP_CUBE_SIZE)
+        ,   +(glb.glb_defs.GP_CUBE_SIZE/2 + (glb.glb_defs.GP_CUBE_SIZE/40))
+        ,   +(glb.glb_defs.GP_CUBE_SIZE/2 + (glb.glb_defs.GP_CUBE_SIZE/40))
+        ,   +(glb.glb_defs.GP_CUBE_SIZE/2 + (glb.glb_defs.GP_CUBE_SIZE/40))
+        ,   -(glb.glb_defs.GP_CUBE_SIZE/2 + (glb.glb_defs.GP_CUBE_SIZE/40))
+        ,   -(glb.glb_defs.GP_CUBE_SIZE/2 + (glb.glb_defs.GP_CUBE_SIZE/40))
+        ,   -(glb.glb_defs.GP_CUBE_SIZE/2 + (glb.glb_defs.GP_CUBE_SIZE/40))
         ]
         y_l=[
             0
@@ -428,18 +429,18 @@ def sukima_logo_duplicate(
         ,   0
         ]
         z_l=[
-            -(glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE/10))
-        ,   -((glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE/10)) + glb.glb.GP_CUBE_SIZE)
-        ,   -(glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE/10))
-        ,   -(glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE/10))
-        ,   -(glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE/10))
-        ,   -(glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE/10))
-        ,   -((glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE/20)) + glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE/10)))
-        ,   -((glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE/20)) + glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE/10)) + glb.glb.GP_CUBE_SIZE)
-        ,   -((glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE/20)) + glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE/10)) + glb.glb.GP_CUBE_SIZE*2)
-        ,   -((glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE/20)) + glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE/10)))
-        ,   -((glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE/20)) + glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE/10)) + glb.glb.GP_CUBE_SIZE)
-        ,   -((glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE/20)) + glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE + (glb.glb.GP_CUBE_SIZE/10)) + glb.glb.GP_CUBE_SIZE*2)
+            -(glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE/10))
+        ,   -((glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE/10)) + glb.glb_defs.GP_CUBE_SIZE)
+        ,   -(glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE/10))
+        ,   -(glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE/10))
+        ,   -(glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE/10))
+        ,   -(glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE/10))
+        ,   -((glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE/20)) + glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE/10)))
+        ,   -((glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE/20)) + glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE/10)) + glb.glb_defs.GP_CUBE_SIZE)
+        ,   -((glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE/20)) + glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE/10)) + glb.glb_defs.GP_CUBE_SIZE*2)
+        ,   -((glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE/20)) + glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE/10)))
+        ,   -((glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE/20)) + glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE/10)) + glb.glb_defs.GP_CUBE_SIZE)
+        ,   -((glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE/20)) + glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE + (glb.glb_defs.GP_CUBE_SIZE/10)) + glb.glb_defs.GP_CUBE_SIZE*2)
         ]
         r_l=[
             -90

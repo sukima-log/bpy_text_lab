@@ -34,7 +34,7 @@ mkdir -p "$PROJECT_DIR/d05_animation"    # animation
 mkdir -p "$PROJECT_DIR/d06_shape_key"    # shape_key
 
 # __init__.py 作成
-echo "from . import glb" > "$PROJECT_DIR/glb/__init__.py"
+echo "from . import glb_defs" > "$PROJECT_DIR/glb/__init__.py"
 echo "from . import sample_obj_wrap" > "$PROJECT_DIR/wrap/__init__.py"
 touch "$PROJECT_DIR/wrap/__init__.py"
 echo "from . import sample_obj_mdl" > "$PROJECT_DIR/d00_mdl/__init__.py"
@@ -57,10 +57,10 @@ echo "from . import wrap" > "$PROJECT_DIR/__init__.py"
 #---------------------------------------------------
 # テンプレートコピー + 追記 + 置換
 #---------------------------------------------------
-# glb.py 作成（テンプレートコピー + 追記 + 置換）
-cp "$SCRIPT_DIR/../../Common/common_top_sub_template.py" "$PROJECT_DIR/glb/glb.py"
-cat "$SCRIPT_DIR/../../Common/common_glb_template.py" >> "$PROJECT_DIR/glb/glb.py"
-sed -i "s/{\$PROJECT_NAME}/$PROJECT_NAME/g" "$PROJECT_DIR/glb/glb.py"
+# glb_defs.py 作成（テンプレートコピー + 追記 + 置換）
+cp "$SCRIPT_DIR/../../Common/common_top_sub_template.py" "$PROJECT_DIR/glb/glb_defs.py"
+cat "$SCRIPT_DIR/../../Common/common_glb_template.py" >> "$PROJECT_DIR/glb/glb_defs.py"
+sed -i "s/{\$PROJECT_NAME}/$PROJECT_NAME/g" "$PROJECT_DIR/glb/glb_defs.py"
 
 # sample_obj_mdl.py 作成（テンプレートコピー + 追記 + 置換）
 cp "$SCRIPT_DIR/../../Common/common_top_sub_template.py" "$PROJECT_DIR/d00_mdl/sample_obj_mdl.py"

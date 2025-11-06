@@ -12,25 +12,26 @@ git_root = subprocess.run(
 if git_root and git_root not in sys.path:
     sys.path.append(git_root)
 # Common Setting
+import Common.common_top as common_top
 from Common.common_top import *
 #========================================================================================
 # ==================================================================
 # = Pre Process
 # ==================================================================
-from Assets.mdl.SAMPLE_MODEL import (
-    glb, wrap, d00_mdl, d01_uv_unwrap, d02_mtal, d03_bake, d04_bone, d05_animation, d06_shape_key
-)
-from Assets.parts import (
-    model, material
-)
+modules = common_top.import_submodules(f"Assets.mdl.SAMPLE_MODEL") 
+parts = common_top.import_submodules("Assets.parts")
+
+globals().update(modules)
+globals().update(parts)
+
 # ==================================================================
 # = Animation
 # ==================================================================
 def sukima_logo_animation(
-    sukima_logo=glb.glb.sukima_logo
-,   sukima_logo_bone=glb.glb.sukima_logo_bone
+    sukima_logo=glb.glb_defs.sukima_logo
+,   sukima_logo_bone=glb.glb_defs.sukima_logo_bone
 ):
-    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[sukima_logo_bone], EXIST_FLAG_DICT=glb.glb.EXIST_FLAG_DICT)):
+    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[sukima_logo_bone], EXIST_FLAG_DICT=glb.glb_defs.EXIST_FLAG_DICT)):
         obj_name=sukima_logo
         obj_bone_name=sukima_logo_bone
         # Mode切り替え
@@ -152,25 +153,25 @@ def sukima_logo_animation(
         # Action Name 変更
         ani_cm_lib.rename_current_armature_action(
             armature_name=sukima_logo_bone
-        ,   new_action_name=glb.glb.ANI_SUKIMA_LOGO_BONE_RUN
+        ,   new_action_name=glb.glb_defs.ANI_SUKIMA_LOGO_BONE_RUN
         )
         # フレーム長 調整
-        bpy.data.actions[glb.glb.ANI_SUKIMA_LOGO_BONE_RUN].use_frame_range = True
+        bpy.data.actions[glb.glb_defs.ANI_SUKIMA_LOGO_BONE_RUN].use_frame_range = True
         frame_start_key = 18
         frame_end_key   = 90
-        bpy.data.actions[glb.glb.ANI_SUKIMA_LOGO_BONE_RUN].frame_start  = frame_start_key
-        bpy.data.actions[glb.glb.ANI_SUKIMA_LOGO_BONE_RUN].frame_end    = frame_end_key
+        bpy.data.actions[glb.glb_defs.ANI_SUKIMA_LOGO_BONE_RUN].frame_start  = frame_start_key
+        bpy.data.actions[glb.glb_defs.ANI_SUKIMA_LOGO_BONE_RUN].frame_end    = frame_end_key
         # ループアニメーション
-        bpy.data.actions[glb.glb.ANI_SUKIMA_LOGO_BONE_RUN].use_cyclic = True
+        bpy.data.actions[glb.glb_defs.ANI_SUKIMA_LOGO_BONE_RUN].use_cyclic = True
         # Animation 登録: ストリップ化
         ani_cm_lib.safe_push_down(
             obj_name=sukima_logo_bone
-        ,   track_name=glb.glb.ANI_SUKIMA_LOGO_BONE_RUN
+        ,   track_name=glb.glb_defs.ANI_SUKIMA_LOGO_BONE_RUN
         )
         # NLA設定
         ani_cm_lib.set_nla_strip_properties(
             obj_name=sukima_logo_bone
-        ,   strip_name=glb.glb.ANI_SUKIMA_LOGO_BONE_RUN
+        ,   strip_name=glb.glb_defs.ANI_SUKIMA_LOGO_BONE_RUN
         ,   frame_start_ui=0
         ,   frame_end_ui=(frame_end_key - frame_start_key)  # Length = (frame_end_ui) * repeat
         ,   repeat=4

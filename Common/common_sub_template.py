@@ -1,12 +1,12 @@
 # ==================================================================
 # = Pre Process
 # ==================================================================
-from Assets.mdl.{$PROJECT_NAME} import (
-    glb, wrap, d00_mdl, d01_uv_unwrap, d02_mtal, d03_bake, d04_bone, d05_animation, d06_shape_key
-)
-from Assets.parts import (
-    model, material
-)
+modules = common_top.import_submodules(f"Assets.mdl.{$PROJECT_NAME}") 
+parts = common_top.import_submodules("Assets.parts")
+
+globals().update(modules)
+globals().update(parts)
+
 # ==================================================================
 # Modeling
 # ==================================================================
@@ -17,7 +17,7 @@ from Assets.parts import (
 def sample_obj_mdl(
     obj_name
 ):
-    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[obj_name], EXIST_FLAG_DICT=glb.glb.EXIST_FLAG_DICT, gen_flag=True)):
+    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[obj_name], EXIST_FLAG_DICT=glb.glb_defs.EXIST_FLAG_DICT, gen_flag=True)):
         # オブジェクト追加
         bpy.ops.mesh.primitive_cube_add(
             size=1                  # 1辺長

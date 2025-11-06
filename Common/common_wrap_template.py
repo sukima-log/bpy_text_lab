@@ -1,12 +1,12 @@
 # ==================================================================
 # = Pre Process
 # ==================================================================
-from Assets.mdl.{$PROJECT_NAME} import (
-    glb, wrap, d00_mdl, d01_uv_unwrap, d02_mtal, d03_bake, d04_bone, d05_animation, d06_shape_key
-)
-from Assets.parts import (
-    model, material
-)
+modules = common_top.import_submodules(f"Assets.mdl.{$PROJECT_NAME}") 
+parts = common_top.import_submodules("Assets.parts")
+
+globals().update(modules)
+globals().update(parts)
+
 # ==================================================================
 # = Wrap Modules
 # ==================================================================

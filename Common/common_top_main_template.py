@@ -15,34 +15,24 @@ if git_root and git_root not in sys.path:
 import Common.common_top as common_top
 from Common.common_top import *
 # Reload Files
-common_top._auto_reload_modules([mm_cm_lib, mdl_cm_lib, mtal_cm_lib, ani_cm_lib, common_top])
+common_top._auto_reload_modules([Mylib, common_top])
 #========================================================================================
 
 # ==================================================================
 # = Pre Process
 # ==================================================================
-from Assets.mdl.{$PROJECT_NAME} import (
-    glb, wrap, d00_mdl, d01_uv_unwrap, d02_mtal, d03_bake, d04_bone, d05_animation, d06_shape_key
-)
-from Assets.parts import (
-    model, material
-)
-# 環境初期化
+modules = common_top.import_submodules(f"Assets.mdl.{$PROJECT_NAME}") 
+parts = common_top.import_submodules("Assets.parts")
+
+globals().update(modules)
+globals().update(parts)
+
+reload_list = list(modules.values()) + list(parts.values())
+
+# --- 環境初期化 ---
 override_common = mm_cm_lib.bpy_modeling_initialize_common(
-    reload_list=[
-        glb
-    ,   wrap
-    ,   d00_mdl
-    ,   d01_uv_unwrap
-    ,   d02_mtal
-    ,   d03_bake
-    ,   d04_bone
-    ,   d05_animation
-    ,   d06_shape_key
-    ,   model
-    ,   material
-    ]               # Reload Dir/File
-,   rm_flg=False    # Object Delete Disable
+    reload_list=reload_list,
+    rm_flg=False    # Object Delete Disable
 )
 
 # ==================================================================
@@ -52,7 +42,7 @@ override_common = mm_cm_lib.bpy_modeling_initialize_common(
 # --------------------------------
 # Base Light 作成 & 配置
 # --------------------------------
-if (mm_cm_lib.glb_exist_obj_chk(obj_list=[glb.glb.base_light], EXIST_FLAG_DICT=glb.glb.EXIST_FLAG_DICT, gen_flag=True)):
+if (mm_cm_lib.glb_exist_obj_chk(obj_list=[glb.glb_defs.base_light], EXIST_FLAG_DICT=glb.glb_defs.EXIST_FLAG_DICT, gen_flag=True)):
     # ポイントライト追加
     bpy.ops.object.light_add(
         type='POINT'
@@ -62,7 +52,7 @@ if (mm_cm_lib.glb_exist_obj_chk(obj_list=[glb.glb.base_light], EXIST_FLAG_DICT=g
     ,   scale=(1, 1, 1)
     )
     # 名前設定
-    bpy.context.object.name = glb.glb.base_light
+    bpy.context.object.name = glb.glb_defs.base_light
     # パワー変更
     bpy.context.object.data.energy = 50000
     # 半径設定
@@ -70,14 +60,14 @@ if (mm_cm_lib.glb_exist_obj_chk(obj_list=[glb.glb.base_light], EXIST_FLAG_DICT=g
 
 # アクティブオブジェクト
 mdl_cm_lib.active_object_select(
-    object_name_list=[glb.glb.base_light]
+    object_name_list=[glb.glb_defs.base_light]
 )
 
 # --------------------------------
 # sample_obj 作成 & 配置
 # --------------------------------
 object_list=[
-    glb.glb.sample_obj
+    glb.glb_defs.sample_obj
 ]
 # オブジェクト作成
 if (mm_cm_lib.require_new_objects(obj_list=object_list, rm_flag=False)):

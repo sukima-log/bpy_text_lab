@@ -12,24 +12,25 @@ git_root = subprocess.run(
 if git_root and git_root not in sys.path:
     sys.path.append(git_root)
 # Common Setting
+import Common.common_top as common_top
 from Common.common_top import *
 #========================================================================================
 # ==================================================================
 # = Pre Process
 # ==================================================================
-from Assets.mdl.SAMPLE_MODEL import (
-    glb, wrap, d00_mdl, d01_uv_unwrap, d02_mtal, d03_bake, d04_bone, d05_animation, d06_shape_key
-)
-from Assets.parts import (
-    model, material
-)
+modules = common_top.import_submodules(f"Assets.mdl.SAMPLE_MODEL") 
+parts = common_top.import_submodules("Assets.parts")
+
+globals().update(modules)
+globals().update(parts)
+
 # =====================================================
 # UV展開
 # =====================================================
 def sukima_logo_uv_unwrap(
-    sukima_logo=glb.glb.sukima_logo
+    sukima_logo=glb.glb_defs.sukima_logo
 ):
-    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[sukima_logo], EXIST_FLAG_DICT=glb.glb.EXIST_FLAG_DICT)):
+    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[sukima_logo], EXIST_FLAG_DICT=glb.glb_defs.EXIST_FLAG_DICT)):
         # ビューへ切り替え
         mdl_cm_lib.change_preview(key="MATERIAL")
         # Mode切り替え
@@ -129,7 +130,7 @@ def sukima_logo_uv_unwrap(
         # アクティブオブジェクト
         mdl_cm_lib.active_object_select(object_name_list=[obj_name])
         # マテリアル追加
-        mtal_cm_lib.add_new_material(material_name=glb.glb.MT_SUKIMA_LOGO_BASE)
+        mtal_cm_lib.add_new_material(material_name=glb.glb_defs.MT_SUKIMA_LOGO_BASE)
         # -----------------------
         # 黒
         # -----------------------
@@ -171,10 +172,10 @@ def sukima_logo_uv_unwrap(
         ,   object_name_list=[obj_name]
         )
         # マテリアル追加
-        mtal_cm_lib.add_new_material(material_name=glb.glb.MT_SUKIMA_LOGO_BLACK)
+        mtal_cm_lib.add_new_material(material_name=glb.glb_defs.MT_SUKIMA_LOGO_BLACK)
         # ベース色変更
         mtal_cm_lib.node_value_change(
-            material_name=glb.glb.MT_SUKIMA_LOGO_BLACK
+            material_name=glb.glb_defs.MT_SUKIMA_LOGO_BLACK
         ,   node_name="Principled BSDF"
         ,   element_name="Base Color"
         ,   set_value=mtal_cm_lib.hex_to_rgba(hex_color="#000000", alpha=1.0)
@@ -190,10 +191,10 @@ def sukima_logo_uv_unwrap(
         ,   object_name_list=[obj_name]
         )
         # マテリアル追加
-        mtal_cm_lib.add_new_material(material_name=glb.glb.MT_SUKIMA_LOGO_ORANGE)
+        mtal_cm_lib.add_new_material(material_name=glb.glb_defs.MT_SUKIMA_LOGO_ORANGE)
         # ベース色変更
         mtal_cm_lib.node_value_change(
-            material_name=glb.glb.MT_SUKIMA_LOGO_ORANGE
+            material_name=glb.glb_defs.MT_SUKIMA_LOGO_ORANGE
         ,   node_name="Principled BSDF"
         ,   element_name="Base Color"
         ,   set_value=mtal_cm_lib.hex_to_rgba(hex_color="#ed5b00", alpha=1.0)
@@ -208,10 +209,10 @@ def sukima_logo_uv_unwrap(
         ,   object_name_list=[obj_name]
         )
         # マテリアル追加
-        mtal_cm_lib.add_new_material(material_name=glb.glb.MT_SUKIMA_LOGO_GRAY)
+        mtal_cm_lib.add_new_material(material_name=glb.glb_defs.MT_SUKIMA_LOGO_GRAY)
         # ベース色変更
         mtal_cm_lib.node_value_change(
-            material_name=glb.glb.MT_SUKIMA_LOGO_GRAY
+            material_name=glb.glb_defs.MT_SUKIMA_LOGO_GRAY
         ,   node_name="Principled BSDF"
         ,   element_name="Base Color"
         ,   set_value=mtal_cm_lib.hex_to_rgba(hex_color="#919191", alpha=1.0)
@@ -228,10 +229,10 @@ def sukima_logo_uv_unwrap(
         ,   object_name_list=[obj_name]
         )
         # マテリアル追加
-        mtal_cm_lib.add_new_material(material_name=glb.glb.MT_SUKIMA_LOGO_LIGHT_GREEN)
+        mtal_cm_lib.add_new_material(material_name=glb.glb_defs.MT_SUKIMA_LOGO_LIGHT_GREEN)
         # ベース色変更
         mtal_cm_lib.node_value_change(
-            material_name=glb.glb.MT_SUKIMA_LOGO_LIGHT_GREEN
+            material_name=glb.glb_defs.MT_SUKIMA_LOGO_LIGHT_GREEN
         ,   node_name="Principled BSDF"
         ,   element_name="Base Color"
         ,   set_value=mtal_cm_lib.hex_to_rgba(hex_color="#50d875", alpha=1.0)
@@ -246,10 +247,10 @@ def sukima_logo_uv_unwrap(
         ,   object_name_list=[obj_name]
         )
         # マテリアル追加
-        mtal_cm_lib.add_new_material(material_name=glb.glb.MT_SUKIMA_LOGO_GREEN)
+        mtal_cm_lib.add_new_material(material_name=glb.glb_defs.MT_SUKIMA_LOGO_GREEN)
         # ベース色変更
         mtal_cm_lib.node_value_change(
-            material_name=glb.glb.MT_SUKIMA_LOGO_GREEN
+            material_name=glb.glb_defs.MT_SUKIMA_LOGO_GREEN
         ,   node_name="Principled BSDF"
         ,   element_name="Base Color"
         ,   set_value=mtal_cm_lib.hex_to_rgba(hex_color="#199f93", alpha=1.0)

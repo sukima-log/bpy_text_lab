@@ -12,24 +12,25 @@ git_root = subprocess.run(
 if git_root and git_root not in sys.path:
     sys.path.append(git_root)
 # Common Setting
+import Common.common_top as common_top
 from Common.common_top import *
 #========================================================================================
 # ==================================================================
 # = Pre Process
 # ==================================================================
-from Assets.mdl.SAMPLE_MODEL import (
-    glb, wrap, d00_mdl, d01_uv_unwrap, d02_mtal, d03_bake, d04_bone, d05_animation, d06_shape_key
-)
-from Assets.parts import (
-    model, material
-)
+modules = common_top.import_submodules(f"Assets.mdl.SAMPLE_MODEL") 
+parts = common_top.import_submodules("Assets.parts")
+
+globals().update(modules)
+globals().update(parts)
+
 # =====================================================
 # Bake
 # =====================================================
 def sukima_logo_bake(
-    sukima_logo=glb.glb.sukima_logo
+    sukima_logo=glb.glb_defs.sukima_logo
 ):
-    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[sukima_logo], EXIST_FLAG_DICT=glb.glb.EXIST_FLAG_DICT, gen_flag=False)):
+    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[sukima_logo], EXIST_FLAG_DICT=glb.glb_defs.EXIST_FLAG_DICT, gen_flag=False)):
         obj_name=sukima_logo
         # ビューへ切り替え
         mdl_cm_lib.change_preview(key="MATERIAL")
@@ -45,12 +46,12 @@ def sukima_logo_bake(
         # Bake
         # ------------------------------------
         mtal_list=[
-            glb.glb.MT_SUKIMA_LOGO_BASE
-        ,   glb.glb.MT_SUKIMA_LOGO_BLACK
-        ,   glb.glb.MT_SUKIMA_LOGO_ORANGE
-        ,   glb.glb.MT_SUKIMA_LOGO_GRAY
-        ,   glb.glb.MT_SUKIMA_LOGO_LIGHT_GREEN
-        ,   glb.glb.MT_SUKIMA_LOGO_GREEN
+            glb.glb_defs.MT_SUKIMA_LOGO_BASE
+        ,   glb.glb_defs.MT_SUKIMA_LOGO_BLACK
+        ,   glb.glb_defs.MT_SUKIMA_LOGO_ORANGE
+        ,   glb.glb_defs.MT_SUKIMA_LOGO_GRAY
+        ,   glb.glb_defs.MT_SUKIMA_LOGO_LIGHT_GREEN
+        ,   glb.glb_defs.MT_SUKIMA_LOGO_GREEN
         ]
         bk_list=[
             "DIFFUSE"

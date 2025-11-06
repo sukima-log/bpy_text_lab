@@ -666,7 +666,6 @@ def select_object_keyframes(
                 kp.select_right_handle = True
                 selected_keys.append((fc, kp))
 
-    print(f"[OK] '{object_name}' の {len(selected_keys)} 個のキーフレームを選択しました。")
     return selected_keys
 
 
@@ -860,7 +859,6 @@ def set_nla_strip_properties(
     for key, value in kwargs.items():
         if hasattr(target_strip, key):
             setattr(target_strip, key, value)
-            print(f"Set {strip_name}.{key} = {value}")
         else:
             print(f"[Warn] Property '{key}' not found in NlaStrip.")
 

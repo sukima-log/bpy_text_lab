@@ -39,13 +39,10 @@ git_root = subprocess.run(
 if git_root and git_root not in sys.path:
     sys.path.append(git_root)
 
+import Mylib
 # Common Lib
-from Mylib import  (
-    mdl_cm_lib
-,   mtal_cm_lib
-,   mm_cm_lib
-,   ani_cm_lib
-)
+from Mylib import *
+
 #------------------------------------------------------------------
 # = Auto Reload
 #------------------------------------------------------------------
@@ -103,6 +100,25 @@ def _auto_reload_modules(modules):
 
     for mod in modules:
         recursive_reload(mod)
+
+def import_submodules(package_name):
+    """
+    指定パッケージ配下のすべてのモジュールを import して辞書で返す
+    例：
+        modules = import_submodules("Assets.mdl.SAMPLE_MODEL")
+        → modules["d00_mdl"] でアクセス可能
+    """
+    package = importlib.import_module(package_name)
+    results = {}
+
+    for loader, name, ispkg in pkgutil.walk_packages(package.__path__, package.__name__ + "."):
+        try:
+            mod = importlib.import_module(name)
+            short_name = name.split(".")[-1]
+            results[short_name] = mod
+        except Exception as e:
+            print(f"[WARN] Failed to import {name}: {e}")
+    return results
 #------------------------------------------------------------------
 # = Pre Process
 #------------------------------------------------------------------

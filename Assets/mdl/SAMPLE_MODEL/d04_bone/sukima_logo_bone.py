@@ -12,24 +12,24 @@ git_root = subprocess.run(
 if git_root and git_root not in sys.path:
     sys.path.append(git_root)
 # Common Setting
+import Common.common_top as common_top
 from Common.common_top import *
-#========================================================================================
 #========================================================================================
 # ==================================================================
 # = Pre Process
 # ==================================================================
-from Assets.mdl.SAMPLE_MODEL import (
-    glb, wrap, d00_mdl, d01_uv_unwrap, d02_mtal, d03_bake, d04_bone, d05_animation, d06_shape_key
-)
-from Assets.parts import (
-    model, material
-)
+modules = common_top.import_submodules(f"Assets.mdl.SAMPLE_MODEL") 
+parts = common_top.import_submodules("Assets.parts")
+
+globals().update(modules)
+globals().update(parts)
+
 # ==================================================================
 # = Bone
 # ==================================================================
 def sukima_logo_bone(
-    sukima_logo=glb.glb.sukima_logo
-,   sukima_logo_bone=glb.glb.sukima_logo_bone
+    sukima_logo=glb.glb_defs.sukima_logo
+,   sukima_logo_bone=glb.glb_defs.sukima_logo_bone
 ):
     obj_name=sukima_logo
     obj_bone_name=sukima_logo_bone
@@ -51,7 +51,7 @@ def sukima_logo_bone(
         # ----------------------------------
         # 手動 ボーン設定 (リギング)
         # ----------------------------------
-        if (mm_cm_lib.glb_exist_obj_chk(obj_list=[obj_bone_name], EXIST_FLAG_DICT=glb.glb.EXIST_FLAG_DICT, gen_flag=True)):
+        if (mm_cm_lib.glb_exist_obj_chk(obj_list=[obj_bone_name], EXIST_FLAG_DICT=glb.glb_defs.EXIST_FLAG_DICT, gen_flag=True)):
             # ボーン 追加
             bpy.ops.object.armature_add(
                 enter_editmode=False
@@ -64,9 +64,9 @@ def sukima_logo_bone(
             # サイズ変更
             bpy.ops.transform.resize(
                 value=(
-                    glb.glb.GP_CUBE_SIZE*2/3
-                ,   glb.glb.GP_CUBE_SIZE*2/3
-                ,   glb.glb.GP_CUBE_SIZE*2/3
+                    glb.glb_defs.GP_CUBE_SIZE*2/3
+                ,   glb.glb_defs.GP_CUBE_SIZE*2/3
+                ,   glb.glb_defs.GP_CUBE_SIZE*2/3
                 )
             ,   orient_type='GLOBAL'
             )
@@ -75,7 +75,7 @@ def sukima_logo_bone(
                 value=(
                     0
                 ,   0
-                ,   -(glb.glb.GP_CUBE_SIZE*2 + glb.glb.GP_CUBE_SIZE/2)
+                ,   -(glb.glb_defs.GP_CUBE_SIZE*2 + glb.glb_defs.GP_CUBE_SIZE/2)
                 )
             ,   orient_type='GLOBAL'
             )
@@ -95,9 +95,9 @@ def sukima_logo_bone(
             # Bone 押し出し 胴体 頭
             #----------------------------------
             z_l=[
-                +(glb.glb.GP_CUBE_SIZE*2.5/3)
-            ,   +(glb.glb.GP_CUBE_SIZE*1.5/3)
-            ,   +(glb.glb.GP_CUBE_SIZE*2.7/3)
+                +(glb.glb_defs.GP_CUBE_SIZE*2.5/3)
+            ,   +(glb.glb_defs.GP_CUBE_SIZE*1.5/3)
+            ,   +(glb.glb_defs.GP_CUBE_SIZE*2.7/3)
             ]
             b_l=[
                 "Bone"
@@ -117,9 +117,9 @@ def sukima_logo_bone(
             # Bone 押し出し 腕
             #----------------------------------
             x_l=[
-                +(glb.glb.GP_CUBE_SIZE/2)
-            ,   +(glb.glb.GP_CUBE_SIZE*2/3)
-            ,   +(glb.glb.GP_CUBE_SIZE*4/3)
+                +(glb.glb_defs.GP_CUBE_SIZE/2)
+            ,   +(glb.glb_defs.GP_CUBE_SIZE*2/3)
+            ,   +(glb.glb_defs.GP_CUBE_SIZE*4/3)
             ]
             y_l=[
                 +0
@@ -128,8 +128,8 @@ def sukima_logo_bone(
             ]
             z_l=[
                 +0
-            ,   -(glb.glb.GP_CUBE_SIZE/16)
-            ,   -(glb.glb.GP_CUBE_SIZE/16)
+            ,   -(glb.glb_defs.GP_CUBE_SIZE/16)
+            ,   -(glb.glb_defs.GP_CUBE_SIZE/16)
             ]
             b_l=[
                 "Bone.001"
@@ -158,7 +158,7 @@ def sukima_logo_bone(
             # Bone 押し出し 脚 足
             #----------------------------------
             x_l=[
-                +(glb.glb.GP_CUBE_SIZE/3)
+                +(glb.glb_defs.GP_CUBE_SIZE/3)
             ,   +0
             ,   +0
             ]
@@ -168,9 +168,9 @@ def sukima_logo_bone(
             ,   +0
             ]
             z_l=[
-                -(glb.glb.GP_CUBE_SIZE/10)
-            ,   -(glb.glb.GP_CUBE_SIZE*1.50)
-            ,   -(glb.glb.GP_CUBE_SIZE*1.50)
+                -(glb.glb_defs.GP_CUBE_SIZE/10)
+            ,   -(glb.glb_defs.GP_CUBE_SIZE*1.50)
+            ,   -(glb.glb_defs.GP_CUBE_SIZE*1.50)
             ]
             b_l=[
                 "Bone"
@@ -284,7 +284,7 @@ def sukima_logo_bone(
             +0
         ]
         y_l=[
-            +glb.glb.GP_CUBE_SIZE
+            +glb.glb_defs.GP_CUBE_SIZE
         ]
         z_l=[
             +0
@@ -339,7 +339,7 @@ def sukima_logo_bone(
         #----------------------------------
         # Rigify ボーン設定 (リギング)
         #----------------------------------
-        if (mm_cm_lib.glb_exist_obj_chk(obj_list=[obj_bone_name], EXIST_FLAG_DICT=glb.glb.EXIST_FLAG_DICT, gen_flag=True)):
+        if (mm_cm_lib.glb_exist_obj_chk(obj_list=[obj_bone_name], EXIST_FLAG_DICT=glb.glb_defs.EXIST_FLAG_DICT, gen_flag=True)):
             # Addon 有効化: Rigify 
             mm_cm_lib.enable_add_on(addon_name="rigify")
             # ボーン 追加
@@ -360,7 +360,7 @@ def sukima_logo_bone(
                 value=(
                     0
                 ,   0
-                ,   -(glb.glb.GP_CUBE_SIZE*5 + glb.glb.GP_CUBE_SIZE/2 + (glb.glb.GP_CUBE_SIZE/10))
+                ,   -(glb.glb_defs.GP_CUBE_SIZE*5 + glb.glb_defs.GP_CUBE_SIZE/2 + (glb.glb_defs.GP_CUBE_SIZE/10))
                 )
             ,   orient_type='GLOBAL'
             )
@@ -390,9 +390,9 @@ def sukima_logo_bone(
             ]
             x_l=[
                 0
-            ,   +(glb.glb.GP_CUBE_SIZE/3)
-            ,   +(glb.glb.GP_CUBE_SIZE/3)
-            ,   +(glb.glb.GP_CUBE_SIZE/4)
+            ,   +(glb.glb_defs.GP_CUBE_SIZE/3)
+            ,   +(glb.glb_defs.GP_CUBE_SIZE/3)
+            ,   +(glb.glb_defs.GP_CUBE_SIZE/4)
             ]
             y_l=[
                 0
@@ -401,10 +401,10 @@ def sukima_logo_bone(
             ,   0
             ]
             z_l=[
-                -(glb.glb.GP_CUBE_SIZE/10)
-            ,   +(glb.glb.GP_CUBE_SIZE*7/10)
-            ,   +(glb.glb.GP_CUBE_SIZE*6/10)
-            ,   +(glb.glb.GP_CUBE_SIZE*2/10)
+                -(glb.glb_defs.GP_CUBE_SIZE/10)
+            ,   +(glb.glb_defs.GP_CUBE_SIZE*7/10)
+            ,   +(glb.glb_defs.GP_CUBE_SIZE*6/10)
+            ,   +(glb.glb_defs.GP_CUBE_SIZE*2/10)
             ]
             for i in range(len(b_l)):
                 # Bone 選択

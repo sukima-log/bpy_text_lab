@@ -1,1 +1,1 @@
-from . import glb
+from . import glb_defs
