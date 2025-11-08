@@ -42,6 +42,8 @@ if git_root and git_root not in sys.path:
 import Mylib
 # Common Lib
 from Mylib import *
+import Assets.parts
+from Assets.parts import *
 
 #------------------------------------------------------------------
 # = Auto Reload

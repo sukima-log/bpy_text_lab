@@ -25,7 +25,6 @@ modules = common_top.import_submodules(f"Assets.mdl.SAMPLE_MODEL")
 parts = common_top.import_submodules("Assets.parts")
 
 globals().update(modules)
-globals().update(parts)
 
 reload_list = list(modules.values()) + list(parts.values())
 

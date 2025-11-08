@@ -5,7 +5,6 @@ modules = common_top.import_submodules(f"Assets.mdl.{$PROJECT_NAME}")
 parts = common_top.import_submodules("Assets.parts")
 
 globals().update(modules)
-globals().update(parts)
 
 # ==================================================================
 # Modeling
