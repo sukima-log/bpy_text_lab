@@ -42,7 +42,7 @@ def bpy_modeling_initialize_common(
                     # クリップスタート設定（e.g.0.001）
                     space.clip_start = 0.0001
     # ファイルの実行毎リロード
-    common_top._auto_reload_modules(reload_list)
+    cm_lib._auto_reload_modules(reload_list)
     return override
 
 

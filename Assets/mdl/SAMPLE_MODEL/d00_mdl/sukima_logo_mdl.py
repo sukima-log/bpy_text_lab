@@ -18,8 +18,8 @@ from Common.common_top import *
 # ==================================================================
 # = Pre Process
 # ==================================================================
-modules = common_top.import_submodules(f"Assets.mdl.SAMPLE_MODEL") 
-parts = common_top.import_submodules("Assets.parts")
+modules = cm_lib.import_submodules(f"Assets.mdl.SAMPLE_MODEL") 
+parts = cm_lib.import_submodules("Assets.parts")
 
 globals().update(modules)
 

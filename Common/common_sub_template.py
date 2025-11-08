@@ -1,8 +1,8 @@
 # ==================================================================
 # = Pre Process
 # ==================================================================
-modules = common_top.import_submodules(f"Assets.mdl.{$PROJECT_NAME}") 
-parts = common_top.import_submodules("Assets.parts")
+modules = cm_lib.import_submodules(f"Assets.mdl.{$PROJECT_NAME}") 
+parts = cm_lib.import_submodules("Assets.parts")
 
 globals().update(modules)
 
