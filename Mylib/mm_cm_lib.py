@@ -625,12 +625,13 @@ def glb_exist_obj_chk(obj_list=["object_name"], EXIST_FLAG_DICT=None, gen_flag=F
 
     # --- gen_flag = True の場合 ---
     if gen_flag:
-        # obj_list の全部分集合を辞書登録
-        for r in range(1, len(obj_list) + 1):
-            for combo in combinations(obj_list, r):
-                EXIST_FLAG_DICT[combo] = all(
-                    (object_exists(n) or bone_exists(n)) for n in combo
-                )
+        # obj_list 全体と個別要素を辞書登録
+        key = tuple(obj_list)
+        EXIST_FLAG_DICT[key] = all(
+            (object_exists(n) or bone_exists(n)) for n in obj_list
+        )
+        for name in obj_list:
+            EXIST_FLAG_DICT[(name,)] = object_exists(name) or bone_exists(name)
 
         # どれか1つでも存在しなければ True（生成フラグ）
         if not all(exist_flags):
@@ -654,3 +655,74 @@ def glb_exist_obj_chk(obj_list=["object_name"], EXIST_FLAG_DICT=None, gen_flag=F
 
 def reset_exist_flag_dict(EXIST_FLAG_DICT=None):
     EXIST_FLAG_DICT.clear()  # 中身だけ空にする
+
+# ========================================================================
+# = ▼ オブジェクト結合
+# ========================================================================
+def join_objects(obj_list, join_name="Joined_Object"):
+    """
+    指定されたオブジェクトを結合して新しいオブジェクトを生成する
+    Args:
+        obj_list (list[str]): 結合するオブジェクト名リスト
+        join_name (str): 結合後のオブジェクト名
+    Returns:
+        bpy.types.Object | None : 結合後のオブジェクト、失敗時は None
+    """
+
+    # -------------------------------------------------------------
+    # 現在のモードを保存
+    # -------------------------------------------------------------
+    prev_mode = bpy.context.object.mode if bpy.context.object else 'OBJECT'
+    if prev_mode != 'OBJECT':
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+    # -------------------------------------------------------------
+    # 結合対象の存在確認
+    # -------------------------------------------------------------
+    existing_objs = [bpy.data.objects.get(name) for name in obj_list if bpy.data.objects.get(name)]
+    missing_objs = [name for name in obj_list if not bpy.data.objects.get(name)]
+
+    if not existing_objs:
+        print("[WARN] join_objects: 有効なオブジェクトが見つかりません。")
+        return None
+
+    if missing_objs:
+        print(f"[WARN] 以下のオブジェクトが存在しません: {missing_objs}")
+
+    # -------------------------------------------------------------
+    # 結合実行
+    # -------------------------------------------------------------
+    # すべて選択解除
+    bpy.ops.object.select_all(action='DESELECT')
+
+    # 結合対象を選択
+    for obj in existing_objs:
+        obj.select_set(True)
+
+    # 最初のオブジェクトをアクティブに設定
+    context_view = bpy.context.view_layer
+    context_view.objects.active = existing_objs[0]
+
+    # join 実行
+    bpy.ops.object.join()
+
+    # -------------------------------------------------------------
+    # 結合後のオブジェクトを取得してリネーム
+    # -------------------------------------------------------------
+    joined_obj = bpy.context.object
+    if joined_obj:
+        joined_obj.name = join_name
+    else:
+        print("[ERROR] 結合処理に失敗しました。")
+        return None
+
+    # -------------------------------------------------------------
+    # 元のモードに戻す
+    # -------------------------------------------------------------
+    if prev_mode != 'OBJECT':
+        try:
+            bpy.ops.object.mode_set(mode=prev_mode)
+        except:
+            pass
+
+    return joined_obj
