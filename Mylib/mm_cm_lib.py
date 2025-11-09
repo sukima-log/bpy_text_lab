@@ -625,7 +625,13 @@ def glb_exist_obj_chk(obj_list=["object_name"], EXIST_FLAG_DICT=None, gen_flag=F
 
     # --- gen_flag = True の場合 ---
     if gen_flag:
-        # obj_list 全体と個別要素を辞書登録
+        # どれか1つでも存在しなければ True（生成フラグ）
+        if not all(exist_flags):
+            # 存在しない場合、obj_list 全削除
+            for name in obj_list:
+                delete_object_or_bone(name)
+
+        # 削除後の状態を登録（最新状態）
         key = tuple(obj_list)
         EXIST_FLAG_DICT[key] = all(
             (object_exists(n) or bone_exists(n)) for n in obj_list
@@ -633,14 +639,8 @@ def glb_exist_obj_chk(obj_list=["object_name"], EXIST_FLAG_DICT=None, gen_flag=F
         for name in obj_list:
             EXIST_FLAG_DICT[(name,)] = object_exists(name) or bone_exists(name)
 
-        # どれか1つでも存在しなければ True（生成フラグ）
-        if not all(exist_flags):
-            # 存在しない場合、obj_list 全削除
-            for name in obj_list:
-                delete_object_or_bone(name)
-            return True
-        else:
-            return False
+        # 戻り値（削除があったか）
+        return not all(exist_flags)
 
     # --- gen_flag = False の場合 ---
     else:
