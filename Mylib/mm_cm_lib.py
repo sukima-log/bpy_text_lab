@@ -647,11 +647,17 @@ def glb_exist_obj_chk(obj_list=["object_name"], EXIST_FLAG_DICT=None, gen_flag=F
         key = tuple(obj_list)
         if key in EXIST_FLAG_DICT:
             if EXIST_FLAG_DICT[key]:
-                return False  # すでに存在していた
+                return False  # グループとしてすでに存在していた
             else:
-                return True   # 再生成されたので編集対象
+                # 単品でも全て存在していれば False を返す
+                if all(EXIST_FLAG_DICT.get((name,), False) for name in obj_list):
+                    return False  # 全て単品で存在している
+                return True       # どれか欠けている
         else:
-            return True
+            # グループキーが無い場合でも、単品キーを調べる
+            if all(EXIST_FLAG_DICT.get((name,), False) for name in obj_list):
+                return False      # 全て単品で存在している
+            return True           # どれか欠けている
 
 def reset_exist_flag_dict(EXIST_FLAG_DICT=None):
     EXIST_FLAG_DICT.clear()  # 中身だけ空にする
