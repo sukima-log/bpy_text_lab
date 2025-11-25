@@ -539,20 +539,20 @@ def image_reference_import(
 ,   empty_image_side='FRONT'
 ):
     if (exist_flg):
-        # 参考画像読み込み
-        bpy.ops.object.empty_image_add(
-            filepath=script_dir + relative_img_path
-        ,   relative_path=True
-        ,   align='WORLD'
-        ,   location=(0, 0, 0)
-        ,   rotation=rotation
-        ,   scale=(1, 1, 1)
-        ,   background=False
-        )
-        # オブジェクト名設定
-        bpy.context.object.name = img_name
         # 上書きしたコンテキストでオペレーターを実行
         with bpy.context.temp_override(**override):
+            # 参考画像読み込み
+            bpy.ops.object.empty_image_add(
+                filepath=script_dir + relative_img_path
+            ,   relative_path=True
+            ,   align='WORLD'
+            ,   location=(0, 0, 0)
+            ,   rotation=rotation
+            ,   scale=(1, 1, 1)
+            ,   background=False
+            )
+            # オブジェクト名設定
+            bpy.context.object.name = img_name
             # ピボット設定
             bpy.context.scene.tool_settings.transform_pivot_point = 'CURSOR'
             # 要素サイズ変更
