@@ -33,6 +33,19 @@ def bpy_modeling_initialize_common(
     )
     # 3Dカーソル位置初期化
     set_3d_cursor_position()
+    # カスタムID表示
+    enable_local_addon(
+        addon_path=git_root + "/Add_on/persistent_id_overlay_fully.py",
+        addon_name="persistent_id_overlay_fully",
+        addon_name_head=""
+    )
+    # カスタムID表示有効化
+    # アドオンがすでに register() 済みであることが前提
+    bpy.ops.view3d.persistent_id_overlay_enable()
+    # カスタムID表示サイズ
+    bpy.context.scene.persistent_id_overlay_font_size = 19
+    # カスタムID 選択時表示
+    bpy.context.scene.persistent_id_overlay_show_only_selected = True
     # 3Dビュー スペース取得
     # 拡大縮小時 視認 処理設定
     for area in bpy.context.screen.areas:
@@ -76,7 +89,7 @@ def update_3d_view_overlay():
                 overlay.show_face_normals       = False # 面法線表示
                 overlay.show_vertex_normals     = False # 頂点法線表示
                 overlay.show_edge_seams         = True  # エッジシーム（接合部表示）
-                overlay.show_extra_indices      = True  # インデックス（面,エッジなど）表示
+                overlay.show_extra_indices      = False  # インデックス（面,エッジなど）表示
                 overlay.show_face_orientation   = False  # 面 向き表示
                 overlay.show_stats              = True  # メッシュ情報
 
@@ -448,6 +461,44 @@ def install_and_enable_addon(
             # オプション：Preferences を保存（次回も自動有効化したい場合）
             bpy.ops.wm.save_userpref()
 
+def enable_local_addon(addon_path, addon_name, addon_name_head="bl_ext.blender_org."):
+    """
+    ローカルのアドオン（ディレクトリまたは.pyファイル）をインストールして有効化する
+
+    addon_path : str  -> アドオンのパス（ディレクトリ or ZIP or .pyファイル）
+    addon_name : str  -> アドオン名（モジュール名）
+    addon_name_head : str -> Blender内で有効化する際の接頭辞
+    """
+    full_addon_name = addon_name_head + addon_name
+
+    # 既に有効化されていればスキップ
+    if full_addon_name in bpy.context.preferences.addons:
+        return
+
+    # パスが存在するかチェック
+    if not os.path.exists(addon_path):
+        print(f"Addon path does not exist: {addon_path}")
+        return
+
+    try:
+        # アドオンをインストール
+        bpy.ops.preferences.addon_install(filepath=addon_path, overwrite=True)
+        print(f"Addon '{addon_name}' installed from '{addon_path}'")
+    except Exception as e:
+        print(f"Failed to install addon: {e}")
+        return
+
+    # アドオン有効化
+    try:
+        bpy.ops.preferences.addon_enable(module=full_addon_name)
+        print(f"Addon '{full_addon_name}' enabled successfully.")
+    except RuntimeError as e:
+        print(f"Failed to enable addon '{full_addon_name}': {e}")
+        return
+
+    # オプション：ユーザープリファレンス保存
+    bpy.ops.wm.save_userpref()
+
 
 # ========================================================================
 # = ▼ アドオン有効化(Addon/Add-on)
@@ -725,6 +776,9 @@ def join_objects(obj_list, join_name="Joined_Object"):
     else:
         print("[ERROR] 結合処理に失敗しました。")
         return None
+    
+    # 重複IDを座標順で修正
+    mdl_cm_lib.fix_duplicate_ids(join_name)
 
     # -------------------------------------------------------------
     # 元のモードに戻す

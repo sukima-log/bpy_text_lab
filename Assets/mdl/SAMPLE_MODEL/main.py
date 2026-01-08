@@ -62,19 +62,25 @@ mdl_cm_lib.active_object_select(
     object_name_list=[glb.glb_defs.base_light]
 )
 
-# --------------------------------
-# sample_obj 作成 & 配置
-# --------------------------------
-object_list=[
-    glb.glb_defs.sukima_logo
-,   glb.glb_defs.sukima_logo_bone
-]
-# オブジェクト作成
-if (mm_cm_lib.require_new_objects(obj_list=object_list, rm_flag=False)):
-    wrap.sukima_logo_wrap.sukima_logo_wrap()
-# コレクション作成+格納
-mm_cm_lib.collection_create_or_move(
-    object_list=object_list
-,   collection_name="LOGO_OBJ"
-,   move_to_collection_name="NaN"
-)
+if (1):
+    # --------------------------------
+    # sample_obj 作成 & 配置
+    # --------------------------------
+    object_list=[
+        glb.glb_defs.sukima_logo
+    ,   glb.glb_defs.sukima_logo_bone
+    ]
+    # オブジェクト作成
+    if (mm_cm_lib.require_new_objects(obj_list=object_list, rm_flag=False)):
+        wrap.sukima_logo_wrap.sukima_logo_wrap(
+            obj_name=object_list[0]
+        ,   obj_name_bone=object_list[1]
+        )
+    # コレクション作成+格納
+    mm_cm_lib.collection_create_or_move(
+        object_list=object_list
+    ,   collection_name="LOGO_OBJ"
+    ,   move_to_collection_name="NaN"
+    )
+    # Clear EXIST_FLAG_DICT
+    mm_cm_lib.reset_exist_flag_dict(EXIST_FLAG_DICT=glb.glb_defs.EXIST_FLAG_DICT)

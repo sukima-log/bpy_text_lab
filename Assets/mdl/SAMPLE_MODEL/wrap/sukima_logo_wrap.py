@@ -30,39 +30,64 @@ globals().update(modules)
 # SAMPLE 作成 & 配置
 # --------------------------------
 def sukima_logo_wrap(
+    obj_name
+,   obj_name_bone
 ):
     # --------------------------------
     # Create Model (メッシュ)
     # --------------------------------
-    d00_mdl.sukima_logo_mdl.sukima_logo_mdl()
+    d00_mdl.sukima_logo_mdl.sukima_logo_mdl(
+        obj_name=obj_name
+    )
     # --------------------------------
     # UV_unwrap (シーム, UV展開)
     # --------------------------------
-    d01_uv_unwrap.sukima_logo_uv_unwrap.sukima_logo_uv_unwrap()
+    # シームをマーク
+    d01_uv_unwrap.sukima_logo_uv_unwrap.sukima_logo_mark_seam(
+        obj_name=obj_name
+    )
+    # UV展開 (シームのマークと分けておいたほうが、マテリアル付けとの順序などにおいて柔軟性高)
+    d01_uv_unwrap.sukima_logo_uv_unwrap.sukima_logo_uv_unwrap(
+        obj_name=obj_name
+    )
     # --------------------------------
     # Material & Texture (質感, 色)
     # --------------------------------
-    d02_mtal.sukima_logo_mtal.sukima_logo_mtal()
+    d02_mtal.sukima_logo_mtal.sukima_logo_mtal(
+        obj_name=obj_name
+    )
     # --------------------------------
     # Bake (マテリアル書き出し)
     # --------------------------------
-    d03_bake.sukima_logo_bake.sukima_logo_bake()
+    d03_bake.sukima_logo_bake.sukima_logo_bake(
+        obj_name=obj_name
+    )
 
     # --------------------------------
     # オブジェクト複製 (Animation用)
     # --------------------------------
-    d00_mdl.sukima_logo_mdl.sukima_logo_duplicate()
+    d00_mdl.sukima_logo_mdl.sukima_logo_duplicate(
+        obj_name=obj_name
+    )
 
     # --------------------------------
     # Armature (リギング,ボーン設定,アーマチュア)
     # --------------------------------
-    d04_bone.sukima_logo_bone.sukima_logo_bone()
+    d04_bone.sukima_logo_bone.sukima_logo_bone(
+        obj_name=obj_name
+    ,   obj_name_bone=obj_name_bone
+    )
     # --------------------------------
     # Animation (ボーン,トランスフォーム)
     # --------------------------------
-    d05_animation.sukima_logo_animation.sukima_logo_animation()
-    # --------------------------------
-    # Shape Key (メッシュパターン作成)
-    # --------------------------------
-    d06_shape_key.sukima_logo_shape_key.sukima_logo_shape_key()
+    d05_animation.sukima_logo_animation.sukima_logo_animation(
+        obj_name=obj_name
+    ,   obj_name_bone=obj_name_bone
+    )
+    # # --------------------------------
+    # # Shape Key (メッシュパターン作成)
+    # # --------------------------------
+    d06_shape_key.sukima_logo_shape_key.sukima_logo_shape_key(
+        obj_name=obj_name
+    )
 

@@ -30,9 +30,11 @@ globals().update(modules)
 # Modeling
 #-------------------------------
 def sukima_logo_mdl(
-    sukima_logo=glb.glb_defs.sukima_logo
+    obj_name
 ):
-    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[sukima_logo], EXIST_FLAG_DICT=glb.glb_defs.EXIST_FLAG_DICT, gen_flag=True)):
+    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[obj_name], EXIST_FLAG_DICT=glb.glb_defs.EXIST_FLAG_DICT, gen_flag=True)):
+        # Mode切り替え
+        bpy.ops.object.mode_set(mode='OBJECT')
         # オブジェクト追加
         bpy.ops.mesh.primitive_cube_add(
             size=1                  # 1辺長
@@ -40,7 +42,9 @@ def sukima_logo_mdl(
         ,   scale=(1.0, 1.0, 1.0)   # x, y, y
         )
         # 名前設定
-        bpy.context.object.name = sukima_logo
+        bpy.context.object.name = obj_name
+        # カスタムID 初期化
+        mdl_cm_lib.init_assign_all_ids(obj_name)
         # サイズ変更
         bpy.ops.transform.resize(
             value=(
@@ -70,321 +74,211 @@ def sukima_logo_mdl(
         line_width_2    = glb.glb_defs.GP_CUBE_SIZE/20   # ライン幅
         bump_value      = glb.glb_defs.GP_CUBE_SIZE/100  # 面 移動 値
         #----------------------------------------
-        # 縁
+        # 縁部分
         #----------------------------------------
-        # ループカット
-        ao_l=[
-            sukima_logo
-        ,   sukima_logo
-        ,   sukima_logo
-        ]
+        # アクティブオブジェクト
+        mdl_cm_lib.active_object_select(object_name_list=[obj_name])
+        # Mode切り替え
+        bpy.ops.object.mode_set(mode='EDIT')
         bl_l=[
-            (lambda:mdl_cm_lib.point_diff_length(obj1_name=ao_l[0], obj1_point=2, obj2_name=ao_l[0], obj2_point=0, coordinate="Y"))()
-        ,   (lambda:mdl_cm_lib.point_diff_length(obj1_name=ao_l[1], obj1_point=4, obj2_name=ao_l[1], obj2_point=0, coordinate="X"))()
-        ,   (lambda:mdl_cm_lib.point_diff_length(obj1_name=ao_l[1], obj1_point=1, obj2_name=ao_l[1], obj2_point=0, coordinate="Z"))()
+            (lambda:mdl_cm_lib.point_diff_length_customid(obj1_name=obj_name, obj1_point=2, obj2_name=obj_name, obj2_point=8, coordinate="Y"))()
+        ,   (lambda:mdl_cm_lib.point_diff_length_customid(obj1_name=obj_name, obj1_point=4, obj2_name=obj_name, obj2_point=8, coordinate="X"))()
+        ,   (lambda:mdl_cm_lib.point_diff_length_customid(obj1_name=obj_name, obj1_point=1, obj2_name=obj_name, obj2_point=8, coordinate="Z"))()
         ]
-        i_l=[
-            [0, 0]
-        ,   [5, 5]
-        ,   [1, 1]
+        l_l=[
+            [[12,   12],    [bl_l[0]-(line_width_0p1),    bl_l[0]-((line_width_0p1)*2)],  [+1,    -1],  ]
+        ,   [[5,    5],     [bl_l[1]-(line_width_0p1),    bl_l[1]-((line_width_0p1)*2)],  [-1,    -1],  ]
+        ,   [[1,    1],     [bl_l[2]-(line_width_0p1),    bl_l[2]-((line_width_0p1)*2)],  [-1,    +1],  ]
         ]
-        s_l=[
-            [bl_l[0]-(line_width_0p1),  bl_l[0]-((line_width_0p1)*2)]
-        ,   [bl_l[1]-(line_width_0p1),  bl_l[1]-((line_width_0p1)*2)]
-        ,   [bl_l[2]-(line_width_0p1),  bl_l[2]-((line_width_0p1)*2)]
-        ]
-        d_l=[
-            [+1 , -1]
-        ,   [+1 , +1]
-        ,   [+1 , -1]
-        ]
-        for i in range(len(ao_l)):
-            # Mode切り替え
-            bpy.ops.object.mode_set(mode='OBJECT')
-            mdl_cm_lib.active_object_select(object_name_list=[ao_l[i]])
-            # Mode切り替え
-            bpy.ops.object.mode_set(mode='EDIT')
-            bl=bl_l[i]
-            mdl_cm_lib.multi_value_loopcut_slide(
-                bl=bl
-            ,   i_a=i_l[i]
-            ,   s_a=s_l[i]
-            ,   d_a=d_l[i]
+        for i in range(len(l_l)):
+            # ループカット
+            mdl_cm_lib.multi_value_loopcut_slide_customid(
+                bl=bl_l[0]
+            ,   cid_list          =l_l[i][0]
+            ,   slide_list        =l_l[i][1]
+            ,   direction_list    =l_l[i][2]
             )
-        # 面 移動
-        o_l=[
-            sukima_logo
-        ,   sukima_logo
-        ,   sukima_logo
-        ,   sukima_logo
-        ,   sukima_logo
-        ,   sukima_logo
+        # 面 移動 (四方面移動 -> 縁部分 角とり)
+        l_l=[
+            [[26],  [0, 0, +bump_value],]
+        ,   [[27],  [0, 0, -bump_value],]
+        ,   [[47],  [+bump_value, 0, 0],]
+        ,   [[49],  [-bump_value, 0, 0],]
+        ,   [[45],  [0, +bump_value, 0],]
+        ,   [[43],  [0, -bump_value, 0],]
         ]
-        i_l=[
-            15
-        ,   26
-        ,   46
-        ,   48
-        ,   42
-        ,   45
-        ]
-        x_l=[
-            0
-        ,   0
-        ,   +bump_value
-        ,   -bump_value
-        ,   0
-        ,   0
-        ]
-        y_l=[
-            0
-        ,   0
-        ,   0
-        ,   0
-        ,   +bump_value
-        ,   -bump_value
-        ]
-        z_l=[
-            +bump_value
-        ,   -bump_value
-        ,   0
-        ,   0
-        ,   0
-        ,   0
-        ]
-        for i in range(len(o_l)):
-            mdl_cm_lib.element_select(
-                element_list=[i_l[i]]
+        for i in range(len(l_l)):
+            mdl_cm_lib.element_select_customid(
+                element_list=l_l[i][0]
             ,   select_mode="FACE"
-            ,   object_name_list=[o_l[i]]
+            ,   object_name_list=[obj_name]
             )
             # Mode切り替え
             bpy.ops.object.mode_set(mode='EDIT')
             bpy.ops.mesh.select_mode(type='FACE')
             # 値を取得（lambdaなら実行）
-            x_value = x_l[i]() if callable(x_l[i]) else x_l[i]
-            y_value = y_l[i]() if callable(y_l[i]) else y_l[i]
-            z_value = z_l[i]() if callable(z_l[i]) else z_l[i]    
+            x_value = l_l[i][1][0]() if callable(l_l[i][1][0]) else l_l[i][1][0]
+            y_value = l_l[i][1][1]() if callable(l_l[i][1][1]) else l_l[i][1][1]
+            z_value = l_l[i][1][2]() if callable(l_l[i][1][2]) else l_l[i][1][2]    
             # 移動
             bpy.ops.transform.translate(
                 value=(x_value, y_value, z_value)
             ,   orient_type='GLOBAL'
             )
-        # 頂点 移動
-        o_l=[
-            sukima_logo, sukima_logo, sukima_logo, sukima_logo
-        ,   sukima_logo, sukima_logo, sukima_logo, sukima_logo
+        # 頂点 移動 (縁 角部分 角とり 法線方向 (NORMAL))
+        l_l=[
+            [[1],   [0, 0, -bump_value/2],  ]
+        ,   [[3],   [0, 0, -bump_value/2],  ]
+        ,   [[5],   [0, 0, -bump_value/2],  ]
+        ,   [[7],   [0, 0, -bump_value/2],  ]
+        ,   [[8],   [0, 0, -bump_value/2],  ]
+        ,   [[2],   [0, 0, -bump_value/2],  ]
+        ,   [[4],   [0, 0, -bump_value/2],  ]
+        ,   [[6],   [0, 0, -bump_value/2],  ]
         ]
-        i_l=[
-            1, 3, 5, 7
-        ,   0, 2, 4, 6
-        ]
-        x_l=[
-            0, 0, 0, 0
-        ,   0, 0, 0, 0
-        ]
-        y_l=[
-            0, 0, 0, 0
-        ,   0, 0, 0, 0
-        ]
-        z_l=[
-            -bump_value/2, -bump_value/2, -bump_value/2, -bump_value/2
-        ,   -bump_value/2, -bump_value/2, -bump_value/2, -bump_value/2
-        ]
-        for i in range(len(o_l)):
-            mdl_cm_lib.element_select(
-                element_list=[i_l[i]]
+        for i in range(len(l_l)):
+            mdl_cm_lib.element_select_customid(
+                element_list=l_l[i][0]
             ,   select_mode="VERT"
-            ,   object_name_list=[o_l[i]]
+            ,   object_name_list=[obj_name]
             )
             # Mode切り替え
             bpy.ops.object.mode_set(mode='EDIT')
             bpy.ops.mesh.select_mode(type='VERT')
             # 値を取得（lambdaなら実行）
-            x_value = x_l[i]() if callable(x_l[i]) else x_l[i]
-            y_value = y_l[i]() if callable(y_l[i]) else y_l[i]
-            z_value = z_l[i]() if callable(z_l[i]) else z_l[i]    
+            x_value = l_l[i][1][0]() if callable(l_l[i][1][0]) else l_l[i][1][0]
+            y_value = l_l[i][1][1]() if callable(l_l[i][1][1]) else l_l[i][1][1]
+            z_value = l_l[i][1][2]() if callable(l_l[i][1][2]) else l_l[i][1][2]    
             # 移動
             bpy.ops.transform.translate(
                 value=(x_value, y_value, z_value)
             ,   orient_type='NORMAL'
             )
         #----------------------------------------
-        # 面 Line
+        # 面 Line ループカット
         #----------------------------------------
-        # ループカット
-        ao_l=[
-            sukima_logo
-        ,   sukima_logo
-        ,   sukima_logo
-        ]
+        # アクティブオブジェクト
+        mdl_cm_lib.active_object_select(object_name_list=[obj_name])
+        # Mode切り替え
+        bpy.ops.object.mode_set(mode='EDIT')
         bl_l=[
-            (lambda:mdl_cm_lib.point_diff_length(obj1_name=ao_l[0], obj1_point=27, obj2_name=ao_l[0], obj2_point=22, coordinate="X"))()
-        ,   (lambda:mdl_cm_lib.point_diff_length(obj1_name=ao_l[0], obj1_point=20, obj2_name=ao_l[0], obj2_point=22, coordinate="Y"))()
-        ,   (lambda:mdl_cm_lib.point_diff_length(obj1_name=ao_l[0], obj1_point=52, obj2_name=ao_l[0], obj2_point=40, coordinate="Z"))()
+            (lambda:mdl_cm_lib.point_diff_length_customid(obj1_name=obj_name, obj1_point=30, obj2_name=obj_name, obj2_point=22, coordinate="X"))()
+        ,   (lambda:mdl_cm_lib.point_diff_length_customid(obj1_name=obj_name, obj1_point=30, obj2_name=obj_name, obj2_point=31, coordinate="Y"))()
+        ,   (lambda:mdl_cm_lib.point_diff_length_customid(obj1_name=obj_name, obj1_point=34, obj2_name=obj_name, obj2_point=46, coordinate="Z"))()
         ]
-        i_l=[
-            [31, 31, 31]
-        ,   [13, 13, 13]
-        ,   [68, 68, 68, 68, 68]
+        l_l=[
+            [[52, 52, 52],    [bl_l[0]-(bl_l[0]*5/11), bl_l[0]-((bl_l[0]*5/11)+(bl_l[0]*5/11/2)), bl_l[0]-((bl_l[0]*5/11)+(bl_l[0]*5/11/2)+(bl_l[0]*5/11/2))],  [+1, -1, -1],  ]
+        ,   [[57, 188, 226],  [bl_l[1]-(bl_l[1]*5.5/12), bl_l[1]-((bl_l[1]*5.5/12)+(bl_l[1]*2.5/12)), bl_l[1]-((bl_l[1]*5.5/12)+(bl_l[1]*2.5/12)*2)],  [-1, -1, -1],  ]
+        ,   [[95, 95, 95, 95, 95],  [bl_l[2]-(bl_l[2]*2.0/20), bl_l[2]-((bl_l[2]*2.0/20)+(bl_l[2]*3.8/20)), bl_l[2]-((bl_l[2]*2.0/20)+(bl_l[2]*3.8/20)*2), bl_l[2]-((bl_l[2]*2.0/20)+(bl_l[2]*3.8/20)*2+(bl_l[2]*4/20)), bl_l[2]-((bl_l[2]*2.0/20)+(bl_l[2]*3.8/20)*2+(bl_l[2]*4/20)*2)],  [-1, -1, -1, -1, -1],]
         ]
-        s_l=[
-            [bl_l[0]-(bl_l[0]*5/11), bl_l[0]-((bl_l[0]*5/11)+(bl_l[0]*5/11/2)), bl_l[0]-((bl_l[0]*5/11)+(bl_l[0]*5/11/2)+(bl_l[0]*5/11/2))]
-        ,   [bl_l[1]-(bl_l[1]*5.5/12), bl_l[1]-((bl_l[1]*5.5/12)+(bl_l[1]*2.5/12)), bl_l[1]-((bl_l[1]*5.5/12)+(bl_l[1]*2.5/12)*2)]
-        ,   [bl_l[2]-(bl_l[2]*2.0/20), bl_l[2]-((bl_l[2]*2.0/20)+(bl_l[2]*3.8/20)), bl_l[2]-((bl_l[2]*2.0/20)+(bl_l[2]*3.8/20)*2), bl_l[2]-((bl_l[2]*2.0/20)+(bl_l[2]*3.8/20)*2+(bl_l[2]*4/20)), bl_l[2]-((bl_l[2]*2.0/20)+(bl_l[2]*3.8/20)*2+(bl_l[2]*4/20)*2)]
-        ]
-        d_l=[
-            [-1, -1, -1]
-        ,   [-1, -1, -1]
-        ,   [-1, -1, -1, -1, -1]
-        ]
-        for i in range(len(ao_l)):
-            # Mode切り替え
-            bpy.ops.object.mode_set(mode='OBJECT')
-            mdl_cm_lib.active_object_select(object_name_list=[ao_l[i]])
-            # Mode切り替え
-            bpy.ops.object.mode_set(mode='EDIT')
-            bl=bl_l[i]
-            mdl_cm_lib.multi_value_loopcut_slide(
-                bl=bl
-            ,   i_a=i_l[i]
-            ,   s_a=s_l[i]
-            ,   d_a=d_l[i]
+        for i in range(len(l_l)):
+            # ループカット
+            mdl_cm_lib.multi_value_loopcut_slide_customid(
+                bl=bl_l[0]
+            ,   cid_list          =l_l[i][0]
+            ,   slide_list        =l_l[i][1]
+            ,   direction_list    =l_l[i][2]
             )
         #----------------------------------------
-        # 面 Line 幅
+        # 面 Line 幅 付け ベベル
         #----------------------------------------
-        o_l=[
-            #
-            sukima_logo
-        ,   sukima_logo
-        ,   sukima_logo
-            #
-        ,   sukima_logo
-        ,   sukima_logo
-        ,   sukima_logo
-        ,   sukima_logo
-            #
-        ,   sukima_logo
-            #
-        ,   sukima_logo
-        ,   sukima_logo
-        ,   sukima_logo
-            #
-        ,   sukima_logo
-        ,   sukima_logo
+        l_l=[
+            # 上面
+            [line_width_1, [265, 229, 193, 128]]
+        ,   [line_width_2, [241, 243, 245]]
+        ,   [line_width_0, [175, 270, 565, 566, 234, 198]]
+        ,   [line_width_0, [151, 268, 570, 571, 196, 232]]
+        ,   [line_width_0, [281]]
+            # 前面
+        ,   [line_width_0, [306, 353, 401, 449, 497, 169]]
+        ,   [line_width_2, [375, 373, 679, 696, 369, 371]]
+        ,   [line_width_2, [145, 304, 447, 495, 731, 730, 399, 351]]
+        ,   [line_width_1, [302, 349]]
+        ,   [line_width_0, [419]]
+        ,   [line_width_0, [771, 770]]
+        ,   [line_width_0, [728]]
+        ,   [line_width_0, [323, 797, 806, 327, 325, 837, 828, 760, 781]]
+            # 左面
+        ,   [line_width_0, [312, 359, 407, 455, 503, 271]]
+        ,   [line_width_0, [310, 357, 405, 453, 501, 235]]
+        ,   [line_width_0, [307, 354, 402, 450, 498, 199]]
+        ,   [line_width_0, [412, 460, 508]]
+        ,   [line_width_0, [458, 1005, 992, 457]]
+        ,   [line_width_0, [409]]
+            # 右面
+        ,   [line_width_0, [309, 356, 404, 452, 500, 252, 477, 478, 479, 480, 525, 526, 527, 528]]
+        ,   [line_width_0, [499, 1131, 1130, 216]]
+        ,   [line_width_0, [335, 336, 383, 384, 431, 432]]
+        ,   [line_width_0, [1278, 1277, 1276, 1275, 311, 358, 406]]
+            # 裏面
+        ,   [line_width_2, [303, 350, 398, 446, 494, 156]]
+        ,   [line_width_0, [305, 352, 400, 448, 496, 180]]
+        ,   [line_width_0, [328, 1367, 1350, 326, 1405, 1388, 322, 324]]
+        ,   [line_width_2, [376, 374]]
+        ,   [line_width_0, [348]]
+        ,   [line_width_0, [372, 1404, 1387, 370]]
+        ,   [line_width_0, [420, 1403, 1386, 418]]
+            # 下面
+        ,   [line_width_0, [276, 278, 280, 282]]
+        ,   [line_width_0, [123, 194, 230]]
+        ,   [line_width_0, [204, 206, 208]]
+        ,   [line_width_0, [240, 242, 244]]
+        ,   [line_width_0, [197]]
+        ,   [line_width_0, [195]]
         ]
-        e_l=[
-            [265, 229, 193, 131]
-        ,   [227, 235, 551]
-        ,   [148, 172, 244, 246, 532, 550, 552, 555, 557, 564, 566, 568, 569]
-        ,   [264, 311, 359, 407, 455, 160, 277, 279, 282]
-        ,   [139, 310, 313, 335, 380, 425, 651, 654, 665, 667, 691, 697, 698, 699]
-        ,   [632, 633, 654, 770, 774]
-        ,   [703, 709, 725, 728, 731]
-        ,   [166, 201, 230, 247, 250, 252, 284, 287, 289, 321, 324, 326, 333, 343, 364, 367, 369, 376, 386, 389, 407, 410, 412, 429]
-        ,   [131, 227, 257, 263, 271, 272, 273, 285, 317, 349]
-        ,   [133, 220, 227, 236, 289, 318, 1038, 1040, 1053, 1055, 1056, 1059, 1081, 1083, 1084, 1089]
-        ,   [1116, 1120, 1183, 1189, 1190]
-        ,   [115, 143, 144, 145, 146, 147, 148, 166, 176, 177, 178, 192, 193, 194, 197]
-        ,   [135, 152, 176, 177, 178, 179, 195, 196, 204, 205, 212, 213, 215, 216, 237, 243, 249, 250, 251, 263, 264, 267, 268, 269, 276]
-        ]
-        b_l=[
-            line_width_1
-        ,   line_width_2
-        ,   line_width_0
-        ,   line_width_0
-        ,   line_width_2
-        ,   line_width_1
-        ,   line_width_0
-        ,   line_width_0
-        ,   line_width_2
-        ,   line_width_0
-        ,   line_width_1
-        ,   line_width_0
-        ,   line_width_0
-        ]
-        for i in range(len(o_l)):
-            # 辺 選択
-            mdl_cm_lib.element_select(
-                element_list=e_l[i]
+        for i in range(len(l_l)):
+            # 要素選択
+            mdl_cm_lib.element_select_customid(
+                element_list=l_l[i][1]
             ,   select_mode="EDGE"
-            ,   object_name_list=[o_l[i]]
+            ,   object_name_list=[obj_name]
             )
-            # 辺 増加 ベベル
+            # メッシュベベル
             bpy.ops.mesh.bevel(
-                offset=b_l[i]           # ベベル オフセット処理、エッジ to エッジ 距離（値が大きいほど面取り幅大）
-            ,   offset_pct=0            # オフセット距離 %
-            ,   segments=2              # 追加 セグメント数（値が大きいほど滑らか）
-            ,   affect='EDGES'          # 辺/頂点
+                offset=l_l[i][0]        # ベベルのオフセット処理、エッジからエッジまでの距離（値が大きいほど面取り幅が大きい）
+            ,   offset_pct=0            # オフセット距離を%で指定
+            ,   segments=2              # ベベルに追加するセグメント数（値が大きいほど滑らかになる）
+            ,   affect='EDGES'          # エッジに適用されるか頂点に適用されるか指定
             )
+            # 選択メッシュ カスタムID 0
+            mdl_cm_lib.zero_selected_elements_customid(obj_name)
+            # 重複IDを座標順で修正
+            mdl_cm_lib.fix_duplicate_ids(obj_name)
         #----------------------------------------
         # 面 Line 溝
         #----------------------------------------
-        common_value = bump_value/4
-        o_l=[
-            sukima_logo
-        ,   sukima_logo
-        ,   sukima_logo
-        ,   sukima_logo
-        ,   sukima_logo
-        ,   sukima_logo
+        common_value = bump_value/2
+        l_l=[
+            [[0, 0, -common_value], [541, 542, 543, 544, 578, 596, 601, 607, 598, 590, 599, 600, 597, 563, 634, 639, 645, 636, 628, 637, 635, 638, 568, 573, 667, 657, 662, 537]]
+        ,   [[0, +common_value, 0], [684, 689, 686, 685, 738, 720, 721, 688, 687, 764, 766, 765, 779, 768, 767, 733, 800, 736, 812, 822, 817, 756, 826, 769, 844, 854, 849, 758, 856, 861, 893, 891, 894, 896, 901, 886, 876, 868, 871, 869, 866, 881, 825, 824, 802, 801, 832, 848]]
+        ,   [[+common_value, 0, 0], [921, 926, 925, 924, 923, 922, 959, 964, 963, 962, 961, 960, 997, 1002, 1001, 1000, 1029, 1026, 1023, 1038, 1044, 1041, 1084, 1071, 1074, 1072, 1069, 1064, 1079, 999, 998, 1097, 1092]]
+        ,   [[0, 0, +common_value], [1554, 1559, 1564, 1569, 1589, 1586, 1587, 1588, 1620, 1605, 1610, 1615, 1643, 1633, 1628, 1638, 1650, 1652, 1651, 1663, 1665, 1664]]
+        ,   [[0, -common_value, 0], [1354, 1357, 1356, 1355, 1392, 1393, 1454, 1441, 1444, 1442, 1439, 1449, 1426, 1429, 1427, 1424, 1419, 1434, 1359, 1358, 1397, 1462, 1472, 1467, 1486, 1484, 1485, 1470, 1518, 1505, 1508, 1506, 1503, 1498, 1513, 1349, 1396, 1546, 1533, 1536, 1534, 1531, 1526, 1541, 1348, 1395, 1394]]
+        ,   [[-common_value, 0, 0], [1166, 1176, 1155, 1165, 1162, 1152, 1173, 1163, 1161, 1170, 1169, 1168, 1167, 1128, 1138, 1196, 1206, 1164, 1203, 1193, 1229, 1221, 1227, 1232, 1226, 1225, 1228, 1135, 1125, 1256, 1253, 1250, 1280, 1265, 1313, 1310, 1319, 1327, 1318, 1307, 1316, 1324, 1315, 1320, 1317, 1314, 1286, 1271, 1283, 1268]]
         ]
-        i_l=[
-            [234, 237, 240, 243, 261, 289, 290, 293, 300, 303, 308, 312, 316, 320, 324, 325, 327, 331, 336, 337, 339, 343, 347, 350, 353, 356, 381, 382, 383, 384]
-        ,   [402, 403, 406, 411, 415, 420, 423, 453, 455, 460, 463, 466, 468, 472, 476, 484, 487, 522, 523, 524, 534, 539, 544, 545, 548, 549, 554, 558, 561, 564, 571, 576, 582, 583, 589, 590, 591, 592, 593, 594, 595, 596, 597, 598, 599, 600, 601, 602, 603, 606, 607, 609, 613, 617, 620, 622, 623, 624, 632, 635, 640, 641]
-        ,   [685, 686, 689, 694, 695, 698, 713, 714, 717, 720, 725, 726, 729, 734, 735, 738, 748, 749, 752, 757, 762, 766, 770, 775, 780, 785, 790, 795, 799, 803, 807, 810, 813, 816, 819, 822, 825, 828, 831, 834, 837, 840, 843]
-        ,   [1155, 1156, 1159, 1164, 1165, 1168, 1173, 1174, 1177, 1187, 1188, 1191, 1196, 1197, 1200, 1205, 1206, 1209, 1224, 1225, 1228, 1232, 1235, 1238, 1241, 1244, 1247, 1250, 1253, 1256, 1259, 1262, 1266, 1271, 1275, 1278]
-        ,   [903, 906, 909, 913, 916, 919, 923, 926, 929, 964, 965, 968, 971, 983, 986, 987, 990, 993, 998, 1002, 1005, 1009, 1013, 1017, 1018, 1020, 1024, 1029, 1033, 1037, 1041, 1044, 1046, 1049, 1076, 1077, 1082, 1093, 1098, 1103, 1104, 1107, 1108, 1113, 1117, 1120, 1123, 1131, 1135, 1141, 1142]
-        ,   [1329, 1330, 1333, 1338, 1339, 1342, 1345, 1355, 1356, 1359, 1364, 1365, 1368, 1371, 1381, 1382, 1385, 1390, 1391, 1394, 1409, 1410, 1413, 1418, 1419, 1422, 1425, 1440, 1441, 1444, 1447, 1452, 1453, 1456, 1459, 1463, 1466, 1469, 1472, 1475, 1478, 1481, 1484, 1487, 1490, 1493, 1496, 1499, 1502, 1505, 1508, 1511, 1515, 1519, 1522, 1525, 1529, 1533, 1536, 1539]
-        ]
-        x_l=[
-            0
-        ,   0
-        ,   +common_value
-        ,   0
-        ,   0
-        ,   -common_value
-        ]
-        y_l=[
-            0
-        ,   +common_value
-        ,   0
-        ,   0
-        ,   -common_value
-        ,   0
-        ]
-        z_l=[
-            -common_value
-        ,   0
-        ,   0
-        ,   +common_value
-        ,   0
-        ,   0
-        ]
-        for i in range(len(o_l)):
-            mdl_cm_lib.element_select(
-                element_list=i_l[i]
+        for i in range(len(l_l)):
+            mdl_cm_lib.element_select_customid(
+                element_list=l_l[i][1]
             ,   select_mode="EDGE"
-            ,   object_name_list=[o_l[i]]
+            ,   object_name_list=[obj_name]
             )
             # Mode切り替え
             bpy.ops.object.mode_set(mode='EDIT')
             bpy.ops.mesh.select_mode(type='EDGE')
             # 値を取得（lambdaなら実行）
-            x_value = x_l[i]() if callable(x_l[i]) else x_l[i]
-            y_value = y_l[i]() if callable(y_l[i]) else y_l[i]
-            z_value = z_l[i]() if callable(z_l[i]) else z_l[i]    
+            x_value = l_l[i][0][0]() if callable(l_l[i][0][0]) else l_l[i][0][0]
+            y_value = l_l[i][0][1]() if callable(l_l[i][0][1]) else l_l[i][0][1]
+            z_value = l_l[i][0][2]() if callable(l_l[i][0][2]) else l_l[i][0][2]    
             # 移動
             bpy.ops.transform.translate(
                 value=(x_value, y_value, z_value)
             ,   orient_type='GLOBAL'
             )
         # 要素選択
-        mdl_cm_lib.element_select(
+        mdl_cm_lib.element_select_customid(
             element_list=["all"]
         ,   select_mode="FACE"
-        ,   object_name_list=[sukima_logo]
+        ,   object_name_list=[obj_name]
         )
         # 全ての選択メッシュを外側に向ける
         bpy.ops.mesh.normals_make_consistent(inside=False)
@@ -393,10 +287,10 @@ def sukima_logo_mdl(
 # Duplicate
 #-------------------------------
 def sukima_logo_duplicate(
-    sukima_logo=glb.glb_defs.sukima_logo
+    obj_name
 ):
-    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[sukima_logo], EXIST_FLAG_DICT=glb.glb_defs.EXIST_FLAG_DICT)):
-        obj_name=sukima_logo
+    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[obj_name], EXIST_FLAG_DICT=glb.glb_defs.EXIST_FLAG_DICT)):
+        obj_name=obj_name
         # Mode切り替え
         bpy.ops.object.mode_set(mode='OBJECT')
         x_l=[
@@ -516,9 +410,12 @@ def sukima_logo_duplicate(
             object_name_list=temp_list
         )
         # オブジェクト結合
-        bpy.ops.object.join()
-        # 名前変更
-        bpy.context.object.name = obj_name
+        mm_cm_lib.join_objects(
+            obj_list=temp_list
+        ,   join_name=obj_name
+        )
+        # 重複IDを座標順で修正
+        mdl_cm_lib.fix_duplicate_ids(obj_name)
         # ----------------------------------
         # オブジェクト全適用
         # ----------------------------------

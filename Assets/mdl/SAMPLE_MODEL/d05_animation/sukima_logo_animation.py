@@ -27,12 +27,12 @@ globals().update(modules)
 # = Animation
 # ==================================================================
 def sukima_logo_animation(
-    sukima_logo=glb.glb_defs.sukima_logo
-,   sukima_logo_bone=glb.glb_defs.sukima_logo_bone
+    obj_name
+,   obj_name_bone
 ):
-    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[sukima_logo_bone], EXIST_FLAG_DICT=glb.glb_defs.EXIST_FLAG_DICT)):
-        obj_name=sukima_logo
-        obj_bone_name=sukima_logo_bone
+    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[obj_name_bone], EXIST_FLAG_DICT=glb.glb_defs.EXIST_FLAG_DICT)):
+        obj_name=obj_name
+        obj_bone_name=obj_name_bone
         # Mode切り替え
         bpy.ops.object.mode_set(mode='OBJECT')
         # Animation 設定
@@ -75,7 +75,7 @@ def sukima_logo_animation(
             for i in range(len(f_l)):
                 # キーフレーム
                 ani_cm_lib.insert_pose_bone_keyframe(
-                    armature_name=sukima_logo_bone
+                    armature_name=obj_name_bone
                 ,   bone_name=bone_name
                 ,   frame=f_l[i]
                 ,   data_path=d_l[i]
@@ -83,7 +83,7 @@ def sukima_logo_animation(
                 )
             # キーフレーム 選択
             ani_cm_lib.select_pose_bone_keyframes(
-                armature_name=sukima_logo_bone
+                armature_name=obj_name_bone
             ,   bone_name=bone_name
             ,   data_path="rotation_euler"
             ,   frame_list=f_l
@@ -92,7 +92,7 @@ def sukima_logo_animation(
             for i in range(5):
                 # キーフレーム複製
                 ani_cm_lib.duplicate_selected_keyframes(
-                    armature_name=sukima_logo_bone
+                    armature_name=obj_name_bone
                 ,   offset_frames=18
                 )
             bone_name=b_l[j][1]
@@ -111,7 +111,7 @@ def sukima_logo_animation(
             for i in range(len(f_l)):
                 # キーフレーム
                 ani_cm_lib.insert_pose_bone_keyframe(
-                    armature_name=sukima_logo_bone
+                    armature_name=obj_name_bone
                 ,   bone_name=bone_name
                 ,   frame=f_l[i]
                 ,   data_path=d_l[i]
@@ -119,7 +119,7 @@ def sukima_logo_animation(
                 )
             # キーフレーム 選択
             ani_cm_lib.select_pose_bone_keyframes(
-                armature_name=sukima_logo_bone
+                armature_name=obj_name_bone
             ,   bone_name=bone_name
             ,   data_path="rotation_euler"
             ,   frame_list=f_l
@@ -128,12 +128,12 @@ def sukima_logo_animation(
             for i in range(5):
                 # キーフレーム複製
                 ani_cm_lib.duplicate_selected_keyframes(
-                    armature_name=sukima_logo_bone
+                    armature_name=obj_name_bone
                 ,   offset_frames=18
                 )
             # キーフレーム 選択
             ani_cm_lib.select_pose_bone_keyframes(
-                armature_name=sukima_logo_bone
+                armature_name=obj_name_bone
             ,   bone_name=bone_name
             ,   data_path="rotation_euler"
             ,   frame_list=None
@@ -141,7 +141,7 @@ def sukima_logo_animation(
             )
             # キーフレーム 移動
             ani_cm_lib.move_selected_keyframes(
-                armature_name=sukima_logo_bone
+                armature_name=obj_name_bone
             ,   offset_frames=-5
             )
         # --------------------------------
@@ -151,7 +151,7 @@ def sukima_logo_animation(
         ani_cm_lib.set_dopesheet_mode_to_action()
         # Action Name 変更
         ani_cm_lib.rename_current_armature_action(
-            armature_name=sukima_logo_bone
+            armature_name=obj_name_bone
         ,   new_action_name=glb.glb_defs.ANI_SUKIMA_LOGO_BONE_RUN
         )
         # フレーム長 調整
@@ -164,12 +164,12 @@ def sukima_logo_animation(
         bpy.data.actions[glb.glb_defs.ANI_SUKIMA_LOGO_BONE_RUN].use_cyclic = True
         # Animation 登録: ストリップ化
         ani_cm_lib.safe_push_down(
-            obj_name=sukima_logo_bone
+            obj_name=obj_name_bone
         ,   track_name=glb.glb_defs.ANI_SUKIMA_LOGO_BONE_RUN
         )
         # NLA設定
         ani_cm_lib.set_nla_strip_properties(
-            obj_name=sukima_logo_bone
+            obj_name=obj_name_bone
         ,   strip_name=glb.glb_defs.ANI_SUKIMA_LOGO_BONE_RUN
         ,   frame_start_ui=0
         ,   frame_end_ui=(frame_end_key - frame_start_key)  # Length = (frame_end_ui) * repeat

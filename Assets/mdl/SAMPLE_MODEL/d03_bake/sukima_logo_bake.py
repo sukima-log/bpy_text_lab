@@ -27,10 +27,10 @@ globals().update(modules)
 # Bake
 # =====================================================
 def sukima_logo_bake(
-    sukima_logo=glb.glb_defs.sukima_logo
+    obj_name
 ):
-    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[sukima_logo], EXIST_FLAG_DICT=glb.glb_defs.EXIST_FLAG_DICT, gen_flag=False)):
-        obj_name=sukima_logo
+    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[obj_name], EXIST_FLAG_DICT=glb.glb_defs.EXIST_FLAG_DICT, gen_flag=False)):
+        obj_name=obj_name
         # ビューへ切り替え
         mdl_cm_lib.change_preview(key="MATERIAL")
         # Mode切り替え
@@ -61,7 +61,7 @@ def sukima_logo_bake(
             # ------------------------------------
             # ベイク用テクスチャ画像作成
             # ------------------------------------
-            bake_image_name = "bk_img_" + sukima_logo + "_" + bk_list[i]
+            bake_image_name = "bk_img_" + obj_name + "_" + bk_list[i]
             mtal_cm_lib.create_bake_texture_image(
                 image_name=bake_image_name
             ,   width=2048

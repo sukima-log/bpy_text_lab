@@ -32,9 +32,9 @@ GP_CUBE_SIZE    = 0.3   # 30 cm * 30 cm * 30 cm
 # Objects
 #------------------------------------------------
 # Sample Light
-base_light      = "base_light"
+base_light          = "base_light"
 # Create Object
-sukima_logo     = "sukima_logo"
+sukima_logo         = "sukima_logo"
 # Armature
 sukima_logo_bone    = "sukima_logo_bone"
 

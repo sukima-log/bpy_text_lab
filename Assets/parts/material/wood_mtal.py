@@ -270,144 +270,333 @@ def mtal_wood_00(
 # マテリアル 木素材 一枚板
 # =====================================================
 def mtal_wood_01(
-    mtal_name="mtal_name"
-,   Mapping_00_Scale=(1, 8.0, 1)
-,   TX_Noise_00_Distortion=2.1
-,   TX_Noise_00_Detail=13
-,   Color_Ramp_00_color_0=(0.176,0.113,0.106,1)
-,   Color_Ramp_00_color_1=(0.279,0.227,0.148,1)
-,   Color_Ramp_00_position_0=0
-,   Color_Ramp_00_position_1=1
-,   Bump_00_Strength=0.15
+    mtal_name="mtal_wood_01",
+
+    # ------------------------------------------
+    # 木目方向（やや誇張、情報整理）
+    # ------------------------------------------
+    Mapping_00_Scale=(1.0, 10.0, 1.0),
+
+    # ------------------------------------------
+    # 年輪（低周波・穏やか）
+    # ------------------------------------------
+    Ring_Noise_Scale=1.4,
+    Ring_Noise_Detail=1.2,
+    Ring_Noise_Distortion=0.6,
+
+    # ------------------------------------------
+    # 導管（高周波・抑制）
+    # ------------------------------------------
+    Grain_Noise_Scale=18.0,
+    Grain_Noise_Detail=6.0,
+    Grain_Noise_Distortion=0.12,
+
+    # ------------------------------------------
+    # 色（少し彩度寄り）
+    # ------------------------------------------
+    Color_Dark=(0.18, 0.12, 0.07, 1.0),
+    Color_Light=(0.42, 0.30, 0.20, 1.0),
+
+    # ------------------------------------------
+    # Roughness（均質寄り）
+    # ------------------------------------------
+    Roughness_Dark=0.45,
+    Roughness_Light=0.7,
+
+    # ------------------------------------------
+    # 凹凸（陰影重視）
+    # ------------------------------------------
+    Bump_Strength=0.35,
+    Bump_Distance=0.08,
 ):
-    # Save : Curren Mode
     current_mode = bpy.context.object.mode
-    # テクスチャ追加
+
+    # =====================================================
+    # Texture Coordinate
+    # =====================================================
     mtal_cm_lib.add_new_texture(
-        material_name=mtal_name
-    ,   texture_name="ShaderNodeTexNoise"
-    ,   texture_node_name="TX_Noise_00"
-    ,   node_location=(-400, 200)
+        material_name=mtal_name,
+        texture_name="ShaderNodeTexCoord",
+        texture_node_name="TX_Coord_00",
+        node_location=(-1300, 300),
     )
 
-    # テクスチャ追加
+    # =====================================================
+    # Mapping
+    # =====================================================
     mtal_cm_lib.add_new_texture(
-        material_name=mtal_name
-    ,   texture_name="ShaderNodeValToRGB"
-    ,   texture_node_name="Color_Ramp_00"
-    ,   node_location=(-300, 500)
+        material_name=mtal_name,
+        texture_name="ShaderNodeMapping",
+        texture_node_name="Mapping_00",
+        node_location=(-1100, 300),
     )
 
-    # ノードのリンク
     mtal_cm_lib.node_link_func(
-        material_name=mtal_name
-    ,   texture_node_name_out="TX_Noise_00"
-    ,   texture_node_name_in="Color_Ramp_00"
-    ,   output_link="Fac"
-    ,   input_link="Fac"
-    )
-    # ノードのリンク
-    mtal_cm_lib.node_link_func(
-        material_name=mtal_name
-    ,   texture_node_name_out="Color_Ramp_00"
-    ,   texture_node_name_in="Principled BSDF"
-    ,   output_link="Color"
-    ,   input_link="Base Color"
-    )
-    # テクスチャ追加
-    mtal_cm_lib.add_new_texture(
-        material_name=mtal_name
-    ,   texture_name="ShaderNodeMapping"
-    ,   texture_node_name="Mapping_00"
-    ,   node_location=(-600, 300)
+        material_name=mtal_name,
+        texture_node_name_out="TX_Coord_00",
+        texture_node_name_in="Mapping_00",
+        output_link="Object",
+        input_link="Vector",
     )
 
-    # ノードのリンク
-    mtal_cm_lib.node_link_func(
-        material_name=mtal_name
-    ,   texture_node_name_out="Mapping_00"
-    ,   texture_node_name_in="TX_Noise_00"
-    ,   output_link="Vector"
-    ,   input_link="Vector"
+    mtal_cm_lib.node_value_change(
+        material_name=mtal_name,
+        node_name="Mapping_00",
+        element_name="Scale",
+        set_value=Mapping_00_Scale,
     )
-    # テクスチャ追加
+
+    # =====================================================
+    # 年輪 Noise（低周波）
+    # =====================================================
     mtal_cm_lib.add_new_texture(
-        material_name=mtal_name
-    ,   texture_name="ShaderNodeTexCoord"
-    ,   texture_node_name="TX_Coord_00"
-    ,   node_location=(-800, 300)
+        material_name=mtal_name,
+        texture_name="ShaderNodeTexNoise",
+        texture_node_name="Noise_Ring",
+        node_location=(-850, 450),
     )
-    # ノードのリンク
+
     mtal_cm_lib.node_link_func(
-        material_name=mtal_name
-    ,   texture_node_name_out="TX_Coord_00"
-    ,   texture_node_name_in="Mapping_00"
-    ,   output_link="Object"
-    ,   input_link="Vector"
+        material_name=mtal_name,
+        texture_node_name_out="Mapping_00",
+        texture_node_name_in="Noise_Ring",
+        output_link="Vector",
+        input_link="Vector",
     )
-    # 木目を付ける
-    # ノード 値変更
+
+    mtal_cm_lib.node_value_change(mtal_name, "Noise_Ring", "Scale", Ring_Noise_Scale)
+    mtal_cm_lib.node_value_change(mtal_name, "Noise_Ring", "Detail", Ring_Noise_Detail)
+    mtal_cm_lib.node_value_change(mtal_name, "Noise_Ring", "Distortion", Ring_Noise_Distortion)
+
+    # =====================================================
+    # 導管 Noise（高周波）
+    # =====================================================
+    mtal_cm_lib.add_new_texture(
+        material_name=mtal_name,
+        texture_name="ShaderNodeTexNoise",
+        texture_node_name="Noise_Grain",
+        node_location=(-850, 150),
+    )
+
+    mtal_cm_lib.node_link_func(
+        material_name=mtal_name,
+        texture_node_name_out="Mapping_00",
+        texture_node_name_in="Noise_Grain",
+        output_link="Vector",
+        input_link="Vector",
+    )
+
+    mtal_cm_lib.node_value_change(mtal_name, "Noise_Grain", "Scale", Grain_Noise_Scale)
+    mtal_cm_lib.node_value_change(mtal_name, "Noise_Grain", "Detail", Grain_Noise_Detail)
+    mtal_cm_lib.node_value_change(mtal_name, "Noise_Grain", "Distortion", Grain_Noise_Distortion)
+
+    # =====================================================
+    # Math：年輪 × 導管
+    # =====================================================
+    mtal_cm_lib.add_new_texture(
+        material_name=mtal_name,
+        texture_name="ShaderNodeMath",
+        texture_node_name="Math_Multiply",
+        node_location=(-600, 300),
+    )
+
     mtal_cm_lib.node_value_change(
-        material_name=mtal_name
-    ,   node_name="Mapping_00"
-    ,   element_name="Scale"
-    ,   set_value=Mapping_00_Scale
+        material_name=mtal_name,
+        node_name="Math_Multiply",
+        element_name="operation",
+        set_value="MULTIPLY",
     )
-    # ノード 値変更
+
+    mtal_cm_lib.node_link_func(
+        material_name=mtal_name,
+        texture_node_name_out="Noise_Ring",
+        texture_node_name_in="Math_Multiply",
+        output_link="Fac",
+        input_link=0,
+    )
+
+    mtal_cm_lib.node_link_func(
+        material_name=mtal_name,
+        texture_node_name_out="Noise_Grain",
+        texture_node_name_in="Math_Multiply",
+        output_link="Fac",
+        input_link=1,
+    )
+
+    # =====================================================
+    # Math：中心を -0.5（段差化）
+    # =====================================================
+    mtal_cm_lib.add_new_texture(
+        material_name=mtal_name,
+        texture_name="ShaderNodeMath",
+        texture_node_name="Math_Center",
+        node_location=(-420, 100),
+    )
+
     mtal_cm_lib.node_value_change(
-        material_name=mtal_name
-    ,   node_name="TX_Noise_00"
-    ,   element_name="Distortion"
-    ,   set_value=TX_Noise_00_Distortion
+        material_name=mtal_name,
+        node_name="Math_Center",
+        element_name="operation",
+        set_value="SUBTRACT",
     )
-    # ノード 値変更
+
+    mtal_cm_lib.node_link_func(
+        material_name=mtal_name,
+        texture_node_name_out="Math_Multiply",
+        texture_node_name_in="Math_Center",
+        output_link="Value",
+        input_link=0,
+    )
+
     mtal_cm_lib.node_value_change(
-        material_name=mtal_name
-    ,   node_name="TX_Noise_00"
-    ,   element_name="Detail"
-    ,   set_value=TX_Noise_00_Detail
+        material_name=mtal_name,
+        node_name="Math_Center",
+        element_name=1,
+        set_value=0.5,
     )
-    # 色の変更
-    # Color_Ramp 色変更
+
+    # =====================================================
+    # Math：段差を強制増幅
+    # =====================================================
+    mtal_cm_lib.add_new_texture(
+        material_name=mtal_name,
+        texture_name="ShaderNodeMath",
+        texture_node_name="Math_Amplify",
+        node_location=(-260, 100),
+    )
+
+    mtal_cm_lib.node_value_change(
+        material_name=mtal_name,
+        node_name="Math_Amplify",
+        element_name="operation",
+        set_value="MULTIPLY",
+    )
+
+    mtal_cm_lib.node_link_func(
+        material_name=mtal_name,
+        texture_node_name_out="Math_Center",
+        texture_node_name_in="Math_Amplify",
+        output_link="Value",
+        input_link=0,
+    )
+
+    mtal_cm_lib.node_value_change(
+        material_name=mtal_name,
+        node_name="Math_Amplify",
+        element_name=1,
+        set_value=6.0,
+    )
+
+    # =====================================================
+    # ColorRamp：Base Color
+    # =====================================================
+    mtal_cm_lib.add_new_texture(
+        material_name=mtal_name,
+        texture_name="ShaderNodeValToRGB",
+        texture_node_name="Color_Ramp_Color",
+        node_location=(-250, 450),
+    )
+
+    mtal_cm_lib.node_link_func(
+        material_name=mtal_name,
+        texture_node_name_out="Math_Multiply",
+        texture_node_name_in="Color_Ramp_Color",
+        output_link="Value",
+        input_link="Fac",
+    )
+
     mtal_cm_lib.node_color_ramp_setting(
-        material_name=mtal_name
-    ,   node_name="Color_Ramp_00"
-    ,   color_0=Color_Ramp_00_color_0 #(0.176,0.113,0.106,1)
-    ,   color_1=Color_Ramp_00_color_1 #(0.279,0.227,0.148,1)
-    ,   position_0=Color_Ramp_00_position_0 # 0
-    ,   position_1=Color_Ramp_00_position_1 # 1
-    ,   interpolation="LINEAR"
+        material_name=mtal_name,
+        node_name="Color_Ramp_Color",
+        color_0=Color_Dark,
+        color_1=Color_Light,
+        position_0=0.0,
+        position_1=1.0,
+        interpolation="EASE",
     )
-    # 木の質感表現
-    # テクスチャ追加
+
+    mtal_cm_lib.node_link_func(
+        material_name=mtal_name,
+        texture_node_name_out="Color_Ramp_Color",
+        texture_node_name_in="Principled BSDF",
+        output_link="Color",
+        input_link="Base Color",
+    )
+
+    # =====================================================
+    # ColorRamp：Roughness
+    # =====================================================
     mtal_cm_lib.add_new_texture(
-        material_name=mtal_name
-    ,   texture_name="ShaderNodeBump"
-    ,   texture_node_name="Bump_00"
-    ,   node_location=(-200, 0)
+        material_name=mtal_name,
+        texture_name="ShaderNodeValToRGB",
+        texture_node_name="Color_Ramp_Rough",
+        node_location=(-250, 200),
     )
-    # ノードのリンク
+
     mtal_cm_lib.node_link_func(
-        material_name=mtal_name
-    ,   texture_node_name_out="Color_Ramp_00"
-    ,   texture_node_name_in="Bump_00"
-    ,   output_link="Color"
-    ,   input_link="Height"
+        material_name=mtal_name,
+        texture_node_name_out="Math_Multiply",
+        texture_node_name_in="Color_Ramp_Rough",
+        output_link="Value",
+        input_link="Fac",
     )
-    # ノードのリンク
+
+    mtal_cm_lib.node_color_ramp_setting(
+        material_name=mtal_name,
+        node_name="Color_Ramp_Rough",
+        color_0=(Roughness_Dark,) * 3 + (1.0,),
+        color_1=(Roughness_Light,) * 3 + (1.0,),
+        position_0=0.0,
+        position_1=1.0,
+        interpolation="LINEAR",
+    )
+
     mtal_cm_lib.node_link_func(
-        material_name=mtal_name
-    ,   texture_node_name_out="Bump_00"
-    ,   texture_node_name_in="Principled BSDF"
-    ,   output_link="Normal"
-    ,   input_link="Normal"
+        material_name=mtal_name,
+        texture_node_name_out="Color_Ramp_Rough",
+        texture_node_name_in="Principled BSDF",
+        output_link="Color",
+        input_link="Roughness",
     )
-    # ノード 値変更
+
+    # =====================================================
+    # Bump（★ Blender 5.1 対応）
+    # =====================================================
+    mtal_cm_lib.add_new_texture(
+        material_name=mtal_name,
+        texture_name="ShaderNodeBump",
+        texture_node_name="Bump_00",
+        node_location=(-80, -50),
+    )
+
+    mtal_cm_lib.node_link_func(
+        material_name=mtal_name,
+        texture_node_name_out="Math_Amplify",
+        texture_node_name_in="Bump_00",
+        output_link="Value",
+        input_link="Height",
+    )
+
     mtal_cm_lib.node_value_change(
-        material_name=mtal_name
-    ,   node_name="Bump_00"
-    ,   element_name="Strength"
-    ,   set_value=Bump_00_Strength # 0.15
+        material_name=mtal_name,
+        node_name="Bump_00",
+        element_name="Strength",
+        set_value=Bump_Strength,
     )
-    # Change Origin Mode
+
+    mtal_cm_lib.node_value_change(
+        material_name=mtal_name,
+        node_name="Bump_00",
+        element_name="Distance",
+        set_value=Bump_Distance,
+    )
+
+    mtal_cm_lib.node_link_func(
+        material_name=mtal_name,
+        texture_node_name_out="Bump_00",
+        texture_node_name_in="Principled BSDF",
+        output_link="Normal",
+        input_link="Normal",
+    )
+
     bpy.ops.object.mode_set(mode=current_mode)

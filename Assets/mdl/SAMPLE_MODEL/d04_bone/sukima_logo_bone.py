@@ -27,11 +27,11 @@ globals().update(modules)
 # = Bone
 # ==================================================================
 def sukima_logo_bone(
-    sukima_logo=glb.glb_defs.sukima_logo
-,   sukima_logo_bone=glb.glb_defs.sukima_logo_bone
+    obj_name
+,   obj_name_bone
 ):
-    obj_name=sukima_logo
-    obj_bone_name=sukima_logo_bone
+    obj_name=obj_name
+    obj_bone_name=obj_name_bone
     # ビューへ切り替え
     mdl_cm_lib.change_preview(key="SOLID")
     # Mode切り替え

@@ -552,42 +552,59 @@ def select_pose_bone_keyframes(
     frame_list=None,
     axis: str | None = None
 ):
-    import bpy
+    
 
     arm_obj = bpy.data.objects.get(armature_name)
-    if not arm_obj or not arm_obj.animation_data or not arm_obj.animation_data.action:
+    if not arm_obj:
+        print(f"[Error] Armature '{armature_name}' not found")
+        return []
+
+    ad = arm_obj.animation_data
+    if not ad or not ad.action:
         print(f"[Error] {armature_name} に有効なアクションがありません。")
         return []
 
-    action = arm_obj.animation_data.action
+    action = ad.action
     selected_keys = []
 
     axis_map = {"X": 0, "Y": 1, "Z": 2}
     target_index = axis_map.get(axis.upper()) if axis else None
 
-    # --- すべてのボーン・F-Curveのキーフレームを deselect ---
-    for fc in action.fcurves:
-        for kp in fc.keyframe_points:
-            kp.select_control_point = False
-            kp.select_left_handle = False
-            kp.select_right_handle = False
+    bone_path_prefix = f'pose.bones["{bone_name}"].{data_path}'
 
-    # --- 指定ボーン・指定軸のキーフレームを選択 ---
-    for fc in action.fcurves:
-        # 対象ボーンの F-Curve でない場合はスキップ
-        if not fc.data_path.startswith(f'pose.bones["{bone_name}"].{data_path}'):
-            continue
+    # ------------------------------------------------
+    # 1. 全キーフレーム deselect
+    # ------------------------------------------------
+    for layer in action.layers:
+        for strip in layer.strips:
+            for channelbag in strip.channelbags:
+                for fc in channelbag.fcurves:
+                    for kp in fc.keyframe_points:
+                        kp.select_control_point = False
+                        kp.select_left_handle = False
+                        kp.select_right_handle = False
 
-        # 軸指定があり対象でない場合はスキップ
-        if target_index is not None and fc.array_index != target_index:
-            continue
+    # ------------------------------------------------
+    # 2. 指定ボーン・指定軸のキーフレーム選択
+    # ------------------------------------------------
+    for layer in action.layers:
+        for strip in layer.strips:
+            for channelbag in strip.channelbags:
+                for fc in channelbag.fcurves:
 
-        for kp in fc.keyframe_points:
-            if frame_list is None or int(round(kp.co.x)) in frame_list:
-                kp.select_control_point = True
-                kp.select_left_handle = True
-                kp.select_right_handle = True
-                selected_keys.append((fc, kp))
+                    if not fc.data_path.startswith(bone_path_prefix):
+                        continue
+
+                    if target_index is not None and fc.array_index != target_index:
+                        continue
+
+                    for kp in fc.keyframe_points:
+                        frame = int(round(kp.co.x))
+                        if frame_list is None or frame in frame_list:
+                            kp.select_control_point = True
+                            kp.select_left_handle = True
+                            kp.select_right_handle = True
+                            selected_keys.append((fc, kp))
 
     return selected_keys
 
@@ -602,69 +619,76 @@ def select_object_keyframes(
     frame_list=None,
     axis: str | None = None
 ):
-    # 指定オブジェクト（またはアーマチュアボーン）の特定データパスに対応する
-    # キーフレームを選択状態にする。
+    """
+    指定オブジェクト（またはアーマチュアボーン）の
+    指定 data_path に対応するキーフレームを選択する。
+    Blender 5.x 対応版。
 
-    # Parameters
-    # ----------
-    # object_name : str
-    #     対象のオブジェクト名（通常オブジェクト or アーマチュア）
-    # bone_name : str | None
-    #     対象ボーン名（通常オブジェクトの場合は None）
-    # data_path : str
-    #     例: "rotation_euler", "location", "scale"
-    # frame_list : list[int] | None
-    #     選択対象とするフレーム番号リスト。Noneなら全選択。
-    # axis : str | None
-    #     "X" / "Y" / "Z" のいずれか。Noneなら全軸。
+    Returns
+    -------
+    list[(fcurve, keyframe_point)]
+    """
+
     
-    # Returns
-    # -------
-    # list[(fcurve, keyframe_point)]
-    #     選択されたキーフレームのリスト。
-  
+
     obj = bpy.data.objects.get(object_name)
-    if not obj or not obj.animation_data or not obj.animation_data.action:
+    if not obj:
+        print(f"[Error] Object '{object_name}' not found.")
+        return []
+
+    ad = obj.animation_data
+    if not ad or not ad.action:
         print(f"[Error] {object_name} に有効なアクションがありません。")
         return []
 
-    action = obj.animation_data.action
+    action = ad.action
     selected_keys = []
 
     axis_map = {"X": 0, "Y": 1, "Z": 2}
     target_index = axis_map.get(axis.upper()) if axis else None
 
-    # --- 対象F-Curveのdata_pathパターンを決定 ---
+    # ------------------------------------------------
+    # 対象 data_path 判定
+    # ------------------------------------------------
     if bone_name:
-        # アーマチュアボーン
         target_prefix = f'pose.bones["{bone_name}"].{data_path}'
     else:
-        # 通常オブジェクト
         target_prefix = data_path
 
-    # --- すべてのキーフレームを deselect ---
-    for fc in action.fcurves:
-        for kp in fc.keyframe_points:
-            kp.select_control_point = False
-            kp.select_left_handle = False
-            kp.select_right_handle = False
+    # ------------------------------------------------
+    # すべてのキーフレームを deselect
+    # ------------------------------------------------
+    for layer in action.layers:
+        for strip in layer.strips:
+            for channelbag in strip.channelbags:
+                for fc in channelbag.fcurves:
+                    for kp in fc.keyframe_points:
+                        kp.select_control_point = False
+                        kp.select_left_handle = False
+                        kp.select_right_handle = False
 
-    # --- 対象のF-Curveを走査して選択 ---
-    for fc in action.fcurves:
-        # 対象のdata_pathでなければスキップ
-        if not fc.data_path.startswith(target_prefix):
-            continue
+    # ------------------------------------------------
+    # 対象 F-Curve を走査して選択
+    # ------------------------------------------------
+    for layer in action.layers:
+        for strip in layer.strips:
+            for channelbag in strip.channelbags:
+                for fc in channelbag.fcurves:
 
-        # 軸指定がある場合
-        if target_index is not None and fc.array_index != target_index:
-            continue
+                    # data_path 判定
+                    if not fc.data_path.startswith(target_prefix):
+                        continue
 
-        for kp in fc.keyframe_points:
-            if frame_list is None or int(round(kp.co.x)) in frame_list:
-                kp.select_control_point = True
-                kp.select_left_handle = True
-                kp.select_right_handle = True
-                selected_keys.append((fc, kp))
+                    # 軸指定がある場合
+                    if target_index is not None and fc.array_index != target_index:
+                        continue
+
+                    for kp in fc.keyframe_points:
+                        if frame_list is None or int(round(kp.co.x)) in frame_list:
+                            kp.select_control_point = True
+                            kp.select_left_handle = True
+                            kp.select_right_handle = True
+                            selected_keys.append((fc, kp))
 
     return selected_keys
 
@@ -676,27 +700,50 @@ def duplicate_selected_keyframes(
     armature_name: str,
     offset_frames: int = 20
 ):
-    # 選択されたキーフレームを offset_frames フレーム後に複製。
+    
+
     arm_obj = bpy.data.objects.get(armature_name)
-    if not arm_obj or not arm_obj.animation_data or not arm_obj.animation_data.action:
+    if not arm_obj:
+        print(f"[Error] Armature '{armature_name}' not found")
+        return
+
+    ad = arm_obj.animation_data
+    if not ad or not ad.action:
         print(f"[Error] {armature_name} に有効なアクションがありません。")
         return
 
-    action = arm_obj.animation_data.action
+    action = ad.action
     count = 0
 
-    for fc in action.fcurves:
-        new_points = []
-        for kp in fc.keyframe_points:
-            if kp.select_control_point:
-                new_frame = kp.co.x + offset_frames
-                new_value = kp.co.y
-                new_points.append((new_frame, new_value))
-                count += 1
+    # ------------------------------------------------
+    # 全 Layer / Strip / ChannelBag / F-Curve を走査
+    # ------------------------------------------------
+    for layer in action.layers:
+        for strip in layer.strips:
+            for channelbag in strip.channelbags:
+                for fc in channelbag.fcurves:
 
-        for new_frame, new_value in new_points:
-            fc.keyframe_points.insert(frame=new_frame, value=new_value, options={'FAST'})
-        fc.update()
+                    # 追加用リスト（insert 中に走査しない）
+                    new_points = []
+
+                    for kp in fc.keyframe_points:
+                        if kp.select_control_point:
+                            new_frame = kp.co.x + offset_frames
+                            new_value = kp.co.y
+                            new_points.append((new_frame, new_value))
+                            count += 1
+
+                    # 実際に複製
+                    for frame, value in new_points:
+                        fc.keyframe_points.insert(
+                            frame=frame,
+                            value=value,
+                            options={'FAST'}
+                        )
+
+                    if new_points:
+                        fc.update()
+
 
 # ================================================================
 # = ▼ 選択したキーフレームを移動
@@ -705,24 +752,41 @@ def move_selected_keyframes(
     armature_name: str,
     offset_frames: int = 20
 ):
-    # 選択済みキーフレームを offset_frames フレーム分だけ移動する。
-    # 複製はせず、選択されたキーフレーム自体を移動。
-    import bpy
+    """
+    選択されているキーフレームを offset_frames 分だけ移動する。
+    複製は行わない。
+    Blender 5.x 対応版。
+    """
+    
 
     arm_obj = bpy.data.objects.get(armature_name)
-    if not arm_obj or not arm_obj.animation_data or not arm_obj.animation_data.action:
+    if not arm_obj:
+        print(f"[Error] Armature '{armature_name}' not found.")
+        return
+
+    ad = arm_obj.animation_data
+    if not ad or not ad.action:
         print(f"[Error] {armature_name} に有効なアクションがありません。")
         return
 
-    action = arm_obj.animation_data.action
+    action = ad.action
     moved_count = 0
 
-    for fc in action.fcurves:
-        for kp in fc.keyframe_points:
-            if kp.select_control_point:
-                kp.co.x += offset_frames
-                moved_count += 1
-        fc.update()
+    # ------------------------------------------------
+    # Blender 5.x Action 構造
+    # Action → Layers → Strips → ChannelBags → FCurves
+    # ------------------------------------------------
+    for layer in action.layers:
+        for strip in layer.strips:
+            for channelbag in strip.channelbags:
+                for fc in channelbag.fcurves:
+                    for kp in fc.keyframe_points:
+                        if kp.select_control_point:
+                            kp.co.x += offset_frames
+                            moved_count += 1
+
+                    if moved_count:
+                        fc.update()
 
 # ================================================================
 # = ▼ dopesheet モード変更
@@ -783,26 +847,49 @@ def rename_current_armature_action(
 # = ▼ Push Down
 # ================================================================
 def safe_push_down(
-    obj_name: str
-,   track_name="Track"
+    obj_name: str,
+    track_name: str = "Track"
 ):
+    
+
     obj = bpy.data.objects.get(obj_name)
-    if not obj or not obj.animation_data or not obj.animation_data.action:
-        print(f"[Error] {obj_name} not found Action.")
-        return
+    if not obj:
+        print(f"[Error] Object '{obj_name}' not found.")
+        return None
 
-    act = obj.animation_data.action
+    # animation_data を必ず確保
+    if not obj.animation_data:
+        obj.animation_data_create()
 
-    # 新しい NLA トラックを作成
-    track = obj.animation_data.nla_tracks.new()
+    ad = obj.animation_data
+    act = ad.action
+    if not act:
+        print(f"[Error] {obj_name} has no active Action.")
+        return None
+
+    # ------------------------------------------------
+    # NLA Track 作成
+    # ------------------------------------------------
+    track = ad.nla_tracks.new()
     track.name = track_name
 
-    # ストリップとして追加
+    # ------------------------------------------------
+    # Action を NLA Strip 化
+    # ------------------------------------------------
     start_frame = int(act.frame_range[0])
-    strip = track.strips.new(act.name, start_frame, act)
 
-    # push_downと同様にアクションを解放
-    obj.animation_data.action = None
+    strip = track.strips.new(
+        name=act.name,
+        start=start_frame,
+        action=act
+    )
+
+    # ------------------------------------------------
+    # Action を解除（Push Down 相当）
+    # ------------------------------------------------
+    ad.action = None
+
+    return strip
 
 
 # ================================================================
@@ -834,16 +921,18 @@ def set_nla_strip_properties(
     #         use_animated_influence=False
 
     obj = bpy.data.objects.get(obj_name)
-    if not obj:
-        print(f"[Error] Object '{obj_name}' not found.")
+    if not obj or not obj.animation_data:
+        print(f"[Error] '{obj_name}' has no animation data.")
         return None
 
-    if not obj.animation_data or not obj.animation_data.nla_tracks:
+    ad = obj.animation_data
+    if not ad.nla_tracks:
         print(f"[Error] '{obj_name}' has no NLA tracks.")
         return None
 
     target_strip = None
-    for track in obj.animation_data.nla_tracks:
+
+    for track in ad.nla_tracks:
         for strip in track.strips:
             if strip.name == strip_name:
                 target_strip = strip
@@ -855,11 +944,62 @@ def set_nla_strip_properties(
         print(f"[Error] Strip '{strip_name}' not found in '{obj_name}'.")
         return None
 
-    # --- 設定処理 ---
+    # ------------------------------------------------
+    # プロパティ設定
+    # ------------------------------------------------
     for key, value in kwargs.items():
         if hasattr(target_strip, key):
-            setattr(target_strip, key, value)
+            try:
+                setattr(target_strip, key, value)
+            except Exception as e:
+                print(f"[Warn] Failed to set '{key}': {e}")
         else:
             print(f"[Warn] Property '{key}' not found in NlaStrip.")
 
     return target_strip
+
+# ================================================================
+# = ▼ シェイプキー順序上げ
+# ================================================================
+def move_shape_key_up_safe(obj, shape_key_name, max_iter=50):
+    """
+    Shape Key を上に移動（無限ループ完全防止）
+    Blender 5.x 対応
+    """
+
+    if not obj or not obj.data.shape_keys:
+        print("[Error] Shape keys not found.")
+        return False
+
+    keys = obj.data.shape_keys.key_blocks
+
+    if shape_key_name not in keys:
+        print(f"[Error] '{shape_key_name}' not found.")
+        return False
+
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+    prev_idx = -1
+
+    for _ in range(max_iter):
+        idx = keys.find(shape_key_name)
+
+        # 到達（Basis or 直下）
+        if idx <= 1:
+            return True
+
+        # 変化なし → 強制停止
+        if idx == prev_idx:
+            print("[Abort] Shape key index not changing.")
+            return False
+
+        prev_idx = idx
+
+        obj.active_shape_key_index = idx
+        bpy.ops.object.shape_key_move(type='UP')
+
+        # ★ これがないと永遠に止まらないことがある
+        bpy.context.view_layer.update()
+
+    print("[Abort] Reached iteration limit.")
+    return False

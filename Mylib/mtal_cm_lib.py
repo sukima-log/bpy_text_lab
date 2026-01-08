@@ -146,7 +146,6 @@ def select_node(material_name="Material", node_name="Node"):
     # Ensure Node Editor
     window, node_editor_area = ensure_node_editor()
     if node_editor_area is None:
-        print("No NODE_EDITOR area found.")
         # Node Editorがなくてもデータ上で選択
         material = bpy.data.materials.get(material_name)
         if material is None:
@@ -193,32 +192,108 @@ def select_node(material_name="Material", node_name="Node"):
 # ▼ ノードの値を変更する
 # ==================================================================
 def node_value_change(
-    material_name="MT_Room"
-,   node_name="TX_Noise_00"
-,   element_name="Scale"
-,   set_value="0"
+    material_name: str,
+    node_name: str,
+    element_name,
+    set_value,
 ):
-    # Get Materila
+    """
+    element_name に指定可能なもの
+
+    ▼ inputs（安全）
+    - int : 入力ソケット index（最優先）
+    - str : 入力ソケット名（"Scale", "Strength" 等）
+
+    ▼ プロパティ
+    - "operation"      (ShaderNodeMath / VectorMath)
+    - "blend_type"     (ShaderNodeMixRGB)
+    - "interpolation"  (ShaderNodeValToRGB)
+    - "color_space"    (ShaderNodeTexImage)
+    """
+
+    # --------------------------------------------------
+    # Material / Node
+    # --------------------------------------------------
     material = bpy.data.materials.get(material_name)
-    if material is not None:
-        # Get Node Tree
-        node_tree = material.node_tree
-        # Get Node
-        node = node_tree.nodes.get(node_name)
-        if node is not None:
-            # Nodeタイプごとに処理を分岐
-            if node.type == 'TEX_IMAGE' and element_name.lower() == 'color space':
-                if node.image is not None:
-                    node.image.colorspace_settings.name = set_value
-                else:
-                    print(f"Node '{node_name}' has no image assigned.")
-            else:
-                # Get Slot and Set Value
-                node.inputs[element_name].default_value = set_value
+    if material is None:
+        print(f"[node_value_change] Material not found: {material_name}")
+        return
+
+    node = material.node_tree.nodes.get(node_name)
+    if node is None:
+        print(f"[node_value_change] Node not found: {node_name}")
+        return
+
+    # ==================================================
+    # ① element_name が int → 入力ソケット index
+    # ==================================================
+    if isinstance(element_name, int):
+        try:
+            node.inputs[element_name].default_value = set_value
+        except IndexError:
+            print(
+                f"[node_value_change] Input index {element_name} "
+                f"not found in node '{node_name}'"
+            )
+        return
+
+    # ==================================================
+    # ② element_name が str
+    # ==================================================
+    if not isinstance(element_name, str):
+        print(
+            f"[node_value_change] element_name must be int or str, "
+            f"got {type(element_name)}"
+        )
+        return
+
+    elem = element_name.lower()
+
+    # --------------------------------------------------
+    # Image Texture : Color Space
+    # --------------------------------------------------
+    if node.type == 'TEX_IMAGE' and elem in {"color_space", "color space"}:
+        if node.image:
+            node.image.colorspace_settings.name = set_value
         else:
-            print(f"Node '{node_name}' not found.")
-    else:
-        print(f"Material '{material_name}' not found.")
+            print(f"[node_value_change] Image not assigned: {node_name}")
+        return
+
+    # --------------------------------------------------
+    # Math / Vector Math : operation
+    # --------------------------------------------------
+    if elem == "operation" and hasattr(node, "operation"):
+        node.operation = set_value
+        return
+
+    # --------------------------------------------------
+    # MixRGB : blend_type
+    # --------------------------------------------------
+    if elem == "blend_type" and hasattr(node, "blend_type"):
+        node.blend_type = set_value
+        return
+
+    # --------------------------------------------------
+    # ColorRamp : interpolation
+    # --------------------------------------------------
+    if node.type == 'VALTORGB' and elem == "interpolation":
+        node.color_ramp.interpolation = set_value
+        return
+
+    # --------------------------------------------------
+    # Input socket by name
+    # --------------------------------------------------
+    if element_name in node.inputs:
+        node.inputs[element_name].default_value = set_value
+        return
+
+    # --------------------------------------------------
+    # Fallback
+    # --------------------------------------------------
+    print(
+        f"[node_value_change] Unsupported element '{element_name}' "
+        f"for node '{node_name}' ({node.type})"
+    )
 
 
 # ==================================================================
