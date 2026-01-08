@@ -81,12 +81,12 @@ def sukima_logo_mdl(
         # Mode切り替え
         bpy.ops.object.mode_set(mode='EDIT')
         bl_l=[
-            (lambda:mdl_cm_lib.point_diff_length_customid(obj1_name=obj_name, obj1_point=2, obj2_name=obj_name, obj2_point=8, coordinate="Y"))()
-        ,   (lambda:mdl_cm_lib.point_diff_length_customid(obj1_name=obj_name, obj1_point=4, obj2_name=obj_name, obj2_point=8, coordinate="X"))()
-        ,   (lambda:mdl_cm_lib.point_diff_length_customid(obj1_name=obj_name, obj1_point=1, obj2_name=obj_name, obj2_point=8, coordinate="Z"))()
+            (lambda:mdl_cm_lib.point_diff_length_customid(obj1_name=obj_name, obj1_point=2, obj2_name=obj_name, obj2_point=4, coordinate="Y"))()
+        ,   (lambda:mdl_cm_lib.point_diff_length_customid(obj1_name=obj_name, obj1_point=5, obj2_name=obj_name, obj2_point=6, coordinate="X"))()
+        ,   (lambda:mdl_cm_lib.point_diff_length_customid(obj1_name=obj_name, obj1_point=1, obj2_name=obj_name, obj2_point=5, coordinate="Z"))()
         ]
         l_l=[
-            [[12,   12],    [bl_l[0]-(line_width_0p1),    bl_l[0]-((line_width_0p1)*2)],  [+1,    -1],  ]
+            [[3,    3],     [bl_l[0]-(line_width_0p1),    bl_l[0]-((line_width_0p1)*2)],  [+1,    -1],  ]
         ,   [[5,    5],     [bl_l[1]-(line_width_0p1),    bl_l[1]-((line_width_0p1)*2)],  [-1,    -1],  ]
         ,   [[1,    1],     [bl_l[2]-(line_width_0p1),    bl_l[2]-((line_width_0p1)*2)],  [-1,    +1],  ]
         ]
@@ -128,13 +128,13 @@ def sukima_logo_mdl(
         # 頂点 移動 (縁 角部分 角とり 法線方向 (NORMAL))
         l_l=[
             [[1],   [0, 0, -bump_value/2],  ]
+        ,   [[2],   [0, 0, -bump_value/2],  ]
         ,   [[3],   [0, 0, -bump_value/2],  ]
+        ,   [[4],   [0, 0, -bump_value/2],  ]
         ,   [[5],   [0, 0, -bump_value/2],  ]
+        ,   [[6],   [0, 0, -bump_value/2],  ]
         ,   [[7],   [0, 0, -bump_value/2],  ]
         ,   [[8],   [0, 0, -bump_value/2],  ]
-        ,   [[2],   [0, 0, -bump_value/2],  ]
-        ,   [[4],   [0, 0, -bump_value/2],  ]
-        ,   [[6],   [0, 0, -bump_value/2],  ]
         ]
         for i in range(len(l_l)):
             mdl_cm_lib.element_select_customid(

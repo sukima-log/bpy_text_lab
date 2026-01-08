@@ -279,6 +279,8 @@ def object_rotate_func(
     ,   radians_num=0                               # 回転角度 (度)
     ,   orient_axis="Z"                             # 回転軸
     ,   orient_type="GLOBAL"                        # 回転軸座標
+    ,   test_axis=None                              # 回転後、現在値よりaxisの座標が大きくなる方向に回転する条件
+    ,   test_vertex=None                            # axisの座標を見る頂点
 ):
     # Save Current Mode
     current_mode = bpy.context.object.mode
@@ -303,6 +305,36 @@ def object_rotate_func(
     # bpy.context.scene.tool_settings.transform_pivot_point = 'BOUNDING_BOX_CENTER' # バウンディングボックスと呼ばれる枠の中心
     #-------------------------------------------------
     bpy.context.scene.tool_settings.transform_pivot_point = transform_pivot_point
+
+    # --------------------
+    # test_axis と test_vertex が指定されている場合は符号を自動決定
+    # --------------------
+    if test_axis is not None and test_vertex is not None:
+        obj = bpy.context.active_object
+        if obj and obj.type == 'MESH':
+            # 元座標保存
+            orig_co = (obj.matrix_world @ obj.data.vertices[test_vertex].co).copy()
+            # 試しに +radians_num 回転
+            bpy.ops.transform.rotate(
+                value=math.radians(abs(radians_num)),
+                orient_axis=orient_axis,
+                orient_type=orient_type
+            )
+            new_co = (obj.matrix_world @ obj.data.vertices[test_vertex].co).copy()
+            # 移動方向で符号決定
+            axis_map = {"X": 0, "Y": 1, "Z": 2}
+            idx = axis_map.get(test_axis.upper(), 0)
+            delta = new_co[idx] - orig_co[idx]
+            sign = 1 if delta >= 0 else -1
+            # 元に戻す
+            bpy.ops.transform.rotate(
+                value=math.radians(-abs(radians_num)),
+                orient_axis=orient_axis,
+                orient_type=orient_type
+            )
+            # 最終 radians_num を設定
+            radians_num = sign * abs(radians_num)
+
     # Rotate Object
     bpy.ops.transform.rotate(
         value=math.radians(radians_num)
@@ -1197,13 +1229,13 @@ def init_assign_all_ids(obj_name):
     # --- 各要素に連番を割り当て ---
     # 頂点に VID を割り当て
     for i in range(len(me.vertices)):
-        me.attributes["vid"].data[i].value = i
+        me.attributes["vid"].data[i].value = 0
     # 辺に EID を割り当て
     for i in range(len(me.edges)):
-        me.attributes["eid"].data[i].value = i
+        me.attributes["eid"].data[i].value = 0
     # 面に FID を割り当て
     for i in range(len(me.polygons)):
-        me.attributes["fid"].data[i].value = i
+        me.attributes["fid"].data[i].value = 0
     # メッシュデータの更新（属性変更を反映）
     me.update()
 
