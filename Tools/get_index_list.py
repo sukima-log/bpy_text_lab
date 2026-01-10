@@ -34,6 +34,8 @@ def get_selected_elements_by_custom_id(
             for v in me.vertices:
                 if v.select:
                     selected_vertex_ids.append(data[v.index].value)
+            # ソート
+            selected_vertex_ids.sort()
         else:
             print(f"[警告] 頂点属性 '{vid_name}' が存在しません")
             selected_vertex_ids = ["<未設定>"]
@@ -47,6 +49,8 @@ def get_selected_elements_by_custom_id(
             for e in me.edges:
                 if e.select:
                     selected_edge_ids.append(data[e.index].value)
+            # ソート
+            selected_edge_ids.sort()
         else:
             print(f"[警告] エッジ属性 '{eid_name}' が存在しません")
             selected_edge_ids = ["<未設定>"]
@@ -60,6 +64,8 @@ def get_selected_elements_by_custom_id(
             for f in me.polygons:
                 if f.select:
                     selected_face_ids.append(data[f.index].value)
+            # ソート
+            selected_face_ids.sort()
         else:
             print(f"[警告] 面属性 '{fid_name}' が存在しません")
             selected_face_ids = ["<未設定>"]
