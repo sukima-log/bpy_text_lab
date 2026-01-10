@@ -279,8 +279,6 @@ def object_rotate_func(
     ,   radians_num=0                               # 回転角度 (度)
     ,   orient_axis="Z"                             # 回転軸
     ,   orient_type="GLOBAL"                        # 回転軸座標
-    ,   test_axis=None                              # 回転後、現在値よりaxisの座標が大きくなる方向に回転する条件
-    ,   test_vertex=None                            # axisの座標を見る頂点
 ):
     # Save Current Mode
     current_mode = bpy.context.object.mode
@@ -307,40 +305,85 @@ def object_rotate_func(
     bpy.context.scene.tool_settings.transform_pivot_point = transform_pivot_point
 
     # --------------------
-    # test_axis と test_vertex が指定されている場合は符号を自動決定
+    # 自動符号補正（複数オブジェクト同時回転対応）
     # --------------------
-    if test_axis is not None and test_vertex is not None:
-        obj = bpy.context.active_object
-        if obj and obj.type == 'MESH':
-            # 元座標保存
-            orig_co = (obj.matrix_world @ obj.data.vertices[test_vertex].co).copy()
-            # 試しに +radians_num 回転
+    if radians_num != 0:
+        ref_obj = bpy.data.objects.get(object_list[0])
+        if ref_obj:
+            # delta 判定用の基準点取得（Mesh or Empty 共通）
+            if ref_obj.type == 'MESH' and len(ref_obj.data.vertices) > 0:
+                bm = bmesh.new()
+                bm.from_mesh(ref_obj.data)
+                bm.verts.ensure_lookup_table()
+                ref_point = ref_obj.matrix_world @ bm.verts[0].co
+                bm.free()
+            else:
+                # Empty の場合や原点でも回転方向判定可能にする微小オフセット
+                offset = 1e-5
+                ref_point = ref_obj.matrix_world.translation.copy() + {
+                    "X": Vector((0, offset, 0)),
+                    "Y": Vector((offset, 0, 0)),
+                    "Z": Vector((0, 0, offset))
+                }.get(orient_axis.upper(), Vector((0, 0, offset)))
+            orig_co = ref_point.copy()
+
+            # 選択して一時回転（正の radians_num）で Blender の回転方向確認
+            bpy.ops.object.select_all(action='DESELECT')
+            for obj_name in object_list:
+                obj = bpy.data.objects.get(obj_name)
+                if obj:
+                    obj.select_set(True)
+            bpy.context.view_layer.objects.active = ref_obj
+
             bpy.ops.transform.rotate(
                 value=math.radians(abs(radians_num)),
                 orient_axis=orient_axis,
                 orient_type=orient_type
             )
-            new_co = (obj.matrix_world @ obj.data.vertices[test_vertex].co).copy()
-            # 移動方向で符号決定
+
+            # 回転後の delta 計算
+            if ref_obj.type == 'MESH' and len(ref_obj.data.vertices) > 0:
+                bm = bmesh.new()
+                bm.from_mesh(ref_obj.data)
+                bm.verts.ensure_lookup_table()
+                new_co = ref_obj.matrix_world @ bm.verts[0].co
+                bm.free()
+            else:
+                new_co = ref_obj.matrix_world.translation.copy() + {
+                    "X": Vector((0, offset, 0)),
+                    "Y": Vector((offset, 0, 0)),
+                    "Z": Vector((0, 0, offset))
+                }.get(orient_axis.upper(), Vector((0, 0, offset)))
+
             axis_map = {"X": 0, "Y": 1, "Z": 2}
-            idx = axis_map.get(test_axis.upper(), 0)
+            idx = axis_map.get(orient_axis.upper(), 2)
             delta = new_co[idx] - orig_co[idx]
-            sign = 1 if delta >= 0 else -1
+
+            # 符号補正（呼び出し側指定の符号を尊重し、Blender のバージョン差も吸収）
+            desired_sign = 1 if radians_num >= 0 else -1
+            actual_sign = 1 if delta >= 0 else -1
+            corrected_radians = desired_sign * abs(radians_num) * actual_sign
+
             # 元に戻す
             bpy.ops.transform.rotate(
                 value=math.radians(-abs(radians_num)),
                 orient_axis=orient_axis,
                 orient_type=orient_type
             )
-            # 最終 radians_num を設定
-            radians_num = sign * abs(radians_num)
 
-    # Rotate Object
-    bpy.ops.transform.rotate(
-        value=math.radians(radians_num)
-    ,   orient_axis=orient_axis
-    ,   orient_type=orient_type
-    )
+            # 選択して最終回転
+            bpy.ops.object.select_all(action='DESELECT')
+            for obj_name in object_list:
+                obj = bpy.data.objects.get(obj_name)
+                if obj:
+                    obj.select_set(True)
+            bpy.context.view_layer.objects.active = ref_obj
+            bpy.ops.transform.rotate(
+                value=math.radians(corrected_radians),
+                orient_axis=orient_axis,
+                orient_type=orient_type
+            )
+
     # Change Original Mode
     if bpy.context.active_object and bpy.context.active_object.type != 'EMPTY':
         try:

@@ -87,7 +87,7 @@ Git Root
 ## 🧩 Supported Versions
 
 - **Blender 4.2** : commit 4014d1d17bd2cfa20d29ac3aa5050f1931dab847 以前
-- **Blender 5.1** : Alpha 環境で動作確認
+- **Blender 5.01** : Stable 環境で動作確認
 ---
 
 ## ⚙️ Setup
@@ -205,7 +205,7 @@ Tools/Export/export_glb_gltf.py
 | Version | Date       | Type    | Description                          | Author |
 |---------|------------|---------|--------------------------------------|-----------|
 | 0.1   | 2025-11-03 | Added   | 動作確認版 | sukimalog.com |
-| 0.2   | 2026-01-09 | Update   | Blender 5.1 (Alpha) 対応<br>カスタムID版へ更新<br>カスタムID版 : Add_on 追加<br>インデックス版で発生していた頂点/辺/面削除時のインデックス再振り直し問題を回避 | sukimalog.com |
+| 0.2   | 2026-01-10 | Update   | Blender 5.01 (Stable) 対応<br>カスタムID版へ更新<br>カスタムID版 : Add_on 追加<br>インデックス版で発生していた頂点/辺/面削除時のインデックス再振り直し問題を回避<br>GPU設定を追加 | sukimalog.com |
 | x.x.x   | xxxx-xx-xx | xxxxx   | xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx | |
 
 

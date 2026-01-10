@@ -84,9 +84,9 @@ def sukima_logo_wrap(
         obj_name=obj_name
     ,   obj_name_bone=obj_name_bone
     )
-    # # --------------------------------
-    # # Shape Key (メッシュパターン作成)
-    # # --------------------------------
+    # --------------------------------
+    # Shape Key (メッシュパターン作成)
+    # --------------------------------
     d06_shape_key.sukima_logo_shape_key.sukima_logo_shape_key(
         obj_name=obj_name
     )

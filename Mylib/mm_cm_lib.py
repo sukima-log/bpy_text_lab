@@ -120,6 +120,21 @@ def preferences_setting():
     # ギズモ 種類設定
     # LOCAL / GLOBAL / NORMAL etc.
     bpy.context.scene.transform_orientation_slots[1].type = 'NORMAL'
+    # GPU設定（存在する場合のみ）
+    prefs = bpy.context.preferences.addons['cycles'].preferences
+    # 最初に Compute Device を ANY にしてデバイスリストを取得
+    prefs.compute_device_type = 'CUDA'  # 最終的に CUDA を使いたい場合
+    prefs.get_devices()  # デバイス初期化
+
+    # デバイスが有効か確認
+    if hasattr(prefs, "devices") and prefs.devices:
+        cuda_devices = [d for d in prefs.devices if getattr(d, "type", "") == 'CUDA' and getattr(d, "use", False)]
+        if cuda_devices:
+            prefs.compute_device_type = 'CUDA'
+        else:
+            prefs.compute_device_type = 'NONE'
+    else:
+        prefs.compute_device_type = 'NONE'
 
 
 # ========================================================================
