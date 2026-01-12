@@ -2345,8 +2345,11 @@ def fix_index_connect_vert_customid(
 # ========================================================================
 # = ▼ 指定頂点（customID）絶対座標取得
 # ========================================================================
-def get_vert_point_customid(vert_index=0):
-    obj = bpy.context.active_object
+def get_vert_point_customid(vert_index=0, obj_name=None):
+    if obj_name:
+        obj = bpy.data.objects.get(obj_name)
+    else:
+        obj = bpy.context.active_object
     if not obj or obj.type != 'MESH':
         print("メッシュオブジェクトが選択されていません。")
         return None
@@ -2453,3 +2456,67 @@ def point_diff_length_customid(
     diff_length = abs(point1[axis] - point2[axis])
 
     return diff_length
+
+# ========================================================================
+# = ▼ 長方形 オブジェクト頂点移動
+# ========================================================================
+def make_cube_move_relative_position_customid(
+    cube_name="default_name"                    # Object Name
+,   cube_size=(0.1, 0.1, 1.0)                   # Object Size
+,   cube_vert=6                                 # Vert Index
+,   destination_obj_name="destination_obj_name" # Base Object Name
+,   destination_vert=0                          # Vert Index
+):
+    # Save: Current Mode
+    current_mode = bpy.context.object.mode
+    bpy.ops.object.mode_set(mode='OBJECT')
+    # Release Select
+    bpy.ops.object.select_all(action='DESELECT')
+    # Add Cube
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    cube_obj = bpy.context.object
+    cube_obj.name = cube_name
+    # Init Custom ID
+    mdl_cm_lib.init_assign_all_ids(cube_name)
+    # Change Size
+    bpy.ops.transform.resize(value=cube_size, orient_type='GLOBAL')
+    bpy.ops.object.transform_apply(scale=True)  # スケール適用（頂点座標に反映）
+    # Get Destination Object
+    des_obj = bpy.data.objects.get(destination_obj_name)
+    if not des_obj:
+        print(f"Object '{destination_obj_name}' not found.")
+        return
+    # Convert Extrude Index to Custom ID
+    cube_vert = custom_id_to_index(
+        obj_name=cube_name
+    ,   custom_id_list=[cube_vert]
+    ,   elem_type='VERT'
+    )
+    destination_vert = custom_id_to_index(
+        obj_name=destination_obj_name
+    ,   custom_id_list=[destination_vert]
+    ,   elem_type='VERT'
+    )
+    # Get World coordinate (ワールド座標取得)
+    des_vert = des_obj.data.vertices[destination_vert[0]]
+    des_world_co = des_obj.matrix_world @ des_vert.co
+    cube_vert_co = cube_obj.data.vertices[cube_vert[0]].co
+    cube_world_co = cube_obj.matrix_world @ cube_vert_co
+    # 相対移動量
+    dx = des_world_co.x - cube_world_co.x
+    dy = des_world_co.y - cube_world_co.y
+    dz = des_world_co.z - cube_world_co.z
+    # 編集モードに入って頂点移動
+    bpy.context.view_layer.objects.active = cube_obj
+    cube_obj.select_set(True)
+    bpy.ops.object.mode_set(mode='EDIT')
+
+    bm = bmesh.from_edit_mesh(cube_obj.data)
+    for v in bm.verts:
+        v.co.x += dx
+        v.co.y += dy
+        v.co.z += dz
+    bmesh.update_edit_mesh(cube_obj.data)
+
+    # Change Original Mode
+    bpy.ops.object.mode_set(mode=current_mode)

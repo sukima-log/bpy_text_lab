@@ -25,6 +25,8 @@ def sample_obj_mdl(
         )
         # 名前設定
         bpy.context.object.name = obj_name
+        # カスタムID 初期化
+        mdl_cm_lib.init_assign_all_ids(obj_name)
         # サイズ変更
         bpy.ops.transform.resize(
             value=(
