@@ -46,4 +46,6 @@ import Mylib
 # Common Lib
 from Mylib import *
 from Assets.parts import *
+from Assets.parts import model
+from Assets.parts import material
 
