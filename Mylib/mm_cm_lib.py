@@ -805,3 +805,26 @@ def join_objects(obj_list, join_name="Joined_Object"):
             pass
 
     return joined_obj
+
+# ========================================================================
+# = ▼ 空のEmpty / anchor 削除
+# ========================================================================
+def remove_empty_without_children():
+    """
+    子オブジェクトを1つも持たない Empty を削除する
+    ※ Image Empty は除外
+    """
+    empties_to_remove = [
+        obj for obj in bpy.data.objects
+        if obj.type == 'EMPTY'
+        and obj.empty_display_type != 'IMAGE'
+        and len(obj.children) == 0
+    ]
+
+    if not empties_to_remove:
+        return 0
+
+    for obj in empties_to_remove:
+        bpy.data.objects.remove(obj, do_unlink=True)
+
+    return len(empties_to_remove)
