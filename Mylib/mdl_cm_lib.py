@@ -391,6 +391,144 @@ def object_rotate_func(
         except RuntimeError:
             pass
 
+# ----------------------------
+# 要素 回転
+# ----------------------------
+def mesh_elements_rotate_customid(
+        object_list=["mesh"],
+        element_type="FACE",
+        custom_ids=[0],
+        transform_pivot_point='INDIVIDUAL_ORIGINS',
+        radians_num=0.0,
+        orient_axis="Z",
+        orient_type="GLOBAL"
+):
+
+    if radians_num == 0:
+        return
+
+    current_mode = bpy.context.object.mode
+
+    if bpy.context.object.mode != 'OBJECT':
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+    bpy.ops.object.select_all(action='DESELECT')
+
+    # -------------------------------------------------
+    # オブジェクト取得
+    # -------------------------------------------------
+    obj = None
+    for name in object_list:
+        o = bpy.data.objects.get(name)
+        if o and o.type == 'MESH':
+            o.select_set(True)
+            bpy.context.view_layer.objects.active = o
+            obj = o
+
+    if obj is None:
+        return
+
+    mesh = obj.data
+
+    # -------------------------------------------------
+    # EDITモードへ
+    # -------------------------------------------------
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_mode(type=element_type)
+    bpy.ops.mesh.select_all(action='DESELECT')
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+    element_indices = custom_id_to_index(
+        obj_name=obj.name,
+        elem_type=element_type,
+        custom_id_list=custom_ids
+    )
+
+    for idx in element_indices:
+        if element_type == "FACE":
+            mesh.polygons[idx].select = True
+        elif element_type == "EDGE":
+            mesh.edges[idx].select = True
+        elif element_type == "VERT":
+            mesh.vertices[idx].select = True
+
+    bpy.ops.object.mode_set(mode='EDIT')
+
+    bpy.context.scene.tool_settings.transform_pivot_point = transform_pivot_point
+
+    # -------------------------------------------------
+    # 毎回方向検証（キャッシュ無し）
+    # -------------------------------------------------
+
+    axis_dict = {
+        "X": Vector((1,0,0)),
+        "Y": Vector((0,1,0)),
+        "Z": Vector((0,0,1))
+    }
+
+    axis_vec = axis_dict.get(orient_axis.upper(), Vector((0,0,1)))
+
+    if orient_type == "LOCAL":
+        axis_vec = obj.matrix_world.to_3x3() @ axis_vec
+
+    axis_vec.normalize()
+
+    # 軸に直交するベクトル生成
+    ref_vec = axis_vec.orthogonal()
+    ref_vec.normalize()
+
+    test_angle = 5.0  # 小さな仮回転角
+
+    # 仮回転（常に正方向でテスト）
+    bpy.ops.transform.rotate(
+        value=math.radians(test_angle),
+        orient_axis=orient_axis,
+        orient_type=orient_type
+    )
+
+    # 回転後のベクトル取得
+    rot_mat = obj.matrix_world.to_3x3()
+    rotated_vec = rot_mat @ ref_vec
+
+    # 外積で回転方向判定
+    cross = ref_vec.cross(rotated_vec)
+    dot = axis_vec.dot(cross)
+
+    # Blenderが「右ねじ系」かどうか判定
+    blender_sign = 1 if dot > 0 else -1
+
+    # 元に戻す
+    bpy.ops.transform.rotate(
+        value=math.radians(-test_angle),
+        orient_axis=orient_axis,
+        orient_type=orient_type
+    )
+
+    # -------------------------------------------------
+    # 指定仕様に合わせた補正
+    # -------------------------------------------------
+
+    desired_sign = 1 if radians_num > 0 else -1
+
+    # 負→正方向から見て時計回りを正にする
+    # Blenderの右ねじ基準と一致させる補正
+    corrected_angle = desired_sign * abs(radians_num) * blender_sign
+
+    # -------------------------------------------------
+    # 最終回転
+    # -------------------------------------------------
+
+    bpy.ops.transform.rotate(
+        value=math.radians(corrected_angle),
+        orient_axis=orient_axis,
+        orient_type=orient_type
+    )
+
+    try:
+        bpy.ops.object.mode_set(mode=current_mode)
+    except:
+        pass
+
 
 # ========================================================================
 # = ▼ 面押し出し インデックス固定
@@ -1180,34 +1318,84 @@ def group_objects_under_base(base_name: str, object_name_list: list[str]) -> dic
 # ========================================================================
 # 2. オブジェクトを元の親子関係に戻す処理
 # ========================================================================
-def ungroup_objects(original_parent_map: dict):
-    # group_objects_under_base() 前の親子関係に戻す。
-    if not original_parent_map:
-        print("No original parent map provided.")
-        return
+def ungroup_objects(original_parent_map=None):
+    """
+    original_parent_map がある場合 → 元の親子関係へ復元
+    original_parent_map が None / 空の場合 →
+        アクティブオブジェクトの属する親階層のみフラット化
+    """
 
-    # Ensure OBJECT mode
+    # OBJECTモード保証
     if bpy.context.object and bpy.context.object.mode != 'OBJECT':
         bpy.ops.object.mode_set(mode='OBJECT')
 
+    # -------------------------------------------------
+    # original_parent_map が無い場合
+    # -------------------------------------------------
+    if not original_parent_map:
+
+        active_obj = bpy.context.active_object
+        if not active_obj:
+            print("No active object.")
+            return
+
+        # ルートオブジェクト取得
+        root = active_obj
+        while root.parent:
+            root = root.parent
+
+        # ルート配下を取得（再帰）
+        def collect_children(obj):
+            objs = [obj]
+            for child in obj.children:
+                objs.extend(collect_children(child))
+            return objs
+
+        hierarchy_objects = collect_children(root)
+
+        # フラット化（root以外）
+        for obj in hierarchy_objects:
+            if obj.parent is not None:
+
+                bpy.ops.object.select_all(action='DESELECT')
+                obj.select_set(True)
+                bpy.context.view_layer.objects.active = obj
+
+                bpy.ops.object.parent_clear(
+                    type='CLEAR_KEEP_TRANSFORM'
+                )
+
+        return
+
+    # -------------------------------------------------
+    # original_parent_map がある場合 → 復元
+    # -------------------------------------------------
     for obj_name, parent_name in original_parent_map.items():
+
         obj = bpy.data.objects.get(obj_name)
         if not obj:
             continue
 
         if parent_name:
             parent_obj = bpy.data.objects.get(parent_name)
+
             if parent_obj:
-                # 元の位置を保つために parent_set を使う
                 bpy.ops.object.select_all(action='DESELECT')
                 obj.select_set(True)
                 bpy.context.view_layer.objects.active = parent_obj
-                bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
+
+                bpy.ops.object.parent_set(
+                    type='OBJECT',
+                    keep_transform=True
+                )
         else:
-            # 親を解除（見た目の位置を保つ）
             bpy.ops.object.select_all(action='DESELECT')
             obj.select_set(True)
-            bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
+            bpy.context.view_layer.objects.active = obj
+
+            bpy.ops.object.parent_clear(
+                type='CLEAR_KEEP_TRANSFORM'
+            )
 
 
 # --------------------
