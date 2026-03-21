@@ -2708,3 +2708,121 @@ def make_cube_move_relative_position_customid(
 
     # Change Original Mode
     bpy.ops.object.mode_set(mode=current_mode)
+
+
+# ========================================================================
+# = ▼ 面押し出し インデックス固定 円系
+# ========================================================================
+def fix_index_extrude_region_move_customid(
+    obj_name="obj_name"         # Object Name
+,   represent_edge=0            # Represent Edge Index (代表エッジ)
+,   resize_values=(1, 1, 1)     # Change Size Value
+,   move_values=(0, 0, 0)       # Move Value
+,   face_add_flag=True          # If True: Add Face
+,   loop_flag=True              # loop enable
+):
+    # Save Current Mode
+    current_mode = bpy.context.object.mode
+    # Change Mode
+    bpy.ops.object.mode_set(mode='OBJECT')
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_mode(type='VERT')
+    # Select Element
+    element_select_customid(
+        element_list=[represent_edge]
+    ,   select_mode="EDGE"
+    ,   object_name_list=[obj_name]
+    )
+    if (loop_flag):
+        # エッジループ 選択 ループ選択(Alt+Click)
+        bpy.ops.mesh.loop_multi_select(ring=False)
+    # Change Mode
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.object.mode_set(mode='OBJECT')
+    # Get Mesh Data
+    mesh = bpy.context.object.data
+    # Get the index of the selected vertex
+    selected_vertex_indices = [v.index for v in mesh.vertices if v.select]
+    # Change index to custom ID
+    selected_vertex_indices=index_to_custom_id(
+        obj_name=obj_name
+    ,   index_list=selected_vertex_indices
+    ,   elem_type="VERT"
+    )
+    # Change Mode
+    bpy.ops.object.mode_set(mode='EDIT')
+    tmp_l=[]
+    for i in range(len(selected_vertex_indices)):
+        # Select Element
+        element_select_customid(
+            element_list=[selected_vertex_indices[i]]
+        ,   select_mode="VERT"
+        ,   object_name_list=[obj_name]
+        )
+        # Create Face (面の作成 外/内側へ拡大(押し込み(押し出し)引き込み/差し込み))
+        bpy.ops.mesh.extrude_region_move(
+            MESH_OT_extrude_region={}, 
+            TRANSFORM_OT_translate={
+            }
+        )
+        # 選択メッシュ カスタムID 0
+        mdl_cm_lib.zero_selected_elements_customid(obj_name)
+        # 重複IDを座標順で修正
+        mdl_cm_lib.fix_duplicate_ids(obj_name)
+        # Change Mode
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.object.mode_set(mode='OBJECT')
+        # Get Mesh Data
+        mesh = bpy.context.object.data
+        # Get the index of the selected vertex
+        tmp_l.append([v.index for v in mesh.vertices if v.select][0])
+        # Change Mode
+        bpy.ops.object.mode_set(mode='EDIT')
+    # Change index to custom ID
+    tmp_l=index_to_custom_id(
+        obj_name=obj_name
+    ,   index_list=tmp_l
+    ,   elem_type="VERT"
+    )
+    # Select Element
+    element_select_customid(
+        element_list=tmp_l
+    ,   select_mode="VERT"
+    ,   object_name_list=[obj_name]
+    )
+    # Change Size
+    bpy.ops.transform.resize(
+        value=resize_values
+    ,   orient_type='GLOBAL'
+    )
+    # Move Object/Element
+    bpy.ops.transform.translate(
+        value=move_values
+    ,   orient_type='GLOBAL'
+    )
+    # Add Face
+    if (face_add_flag):
+        for i in range(1, len(tmp_l)):
+            # Select Element
+            element_select_customid(
+                element_list=[tmp_l[i], selected_vertex_indices[i], tmp_l[i-1], selected_vertex_indices[i-1]]
+            ,   select_mode="VERT"
+            ,   object_name_list=[obj_name]
+            )
+            # Add Face (面 追加・埋める・貼る) (F)
+            edge_face_add_bmesh_with_zero_customid(obj_name)
+            # 重複IDを座標順で修正
+            fix_duplicate_ids(obj_name)
+        if (loop_flag):
+            # Connect First and Last Point (最初と最後部分をつなぐ)
+            element_select_customid(
+                element_list=[tmp_l[0], selected_vertex_indices[0], tmp_l[len(tmp_l)-1], selected_vertex_indices[len(tmp_l)-1]]
+            ,   select_mode="VERT"
+            ,   object_name_list=[obj_name]
+            )
+            # Add Face (面 追加・埋める・貼る) (F)
+            edge_face_add_bmesh_with_zero_customid(obj_name)
+            # 重複IDを座標順で修正
+            fix_duplicate_ids(obj_name)
+    # Change Original Mode
+    bpy.ops.object.mode_set(mode=current_mode)

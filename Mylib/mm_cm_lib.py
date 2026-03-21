@@ -609,7 +609,7 @@ def image_reference_import(
         with bpy.context.temp_override(**override):
             # 参考画像読み込み
             bpy.ops.object.empty_image_add(
-                filepath=script_dir + relative_img_path
+                filepath=relative_img_path
             ,   relative_path=True
             ,   align='WORLD'
             ,   location=(0, 0, 0)
