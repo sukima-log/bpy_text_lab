@@ -388,7 +388,7 @@ def sukima_logo_duplicate(
             mdl_cm_lib.object_rotate_func(
                 object_list=[obj_name + "_" + str(i)]
             ,   transform_pivot_point="INDIVIDUAL_ORIGINS"
-            ,   radians_num=r_l[i]
+            ,   degrees_num=r_l[i]
             ,   orient_axis=o_l[i]
             ,   orient_type="GLOBAL"
             )

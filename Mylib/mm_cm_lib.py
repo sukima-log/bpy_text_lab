@@ -90,12 +90,12 @@ def update_3d_view_overlay():
                 overlay.show_vertex_normals     = False # 頂点法線表示
                 overlay.show_edge_seams         = True  # エッジシーム（接合部表示）
                 overlay.show_extra_indices      = False  # インデックス（面,エッジなど）表示
-                overlay.show_face_orientation   = False  # 面 向き表示
+                overlay.show_face_orientation   = True  # 面 向き表示
                 overlay.show_stats              = True  # メッシュ情報
 
                 # ---- Shading settings ----
                 shading = space.shading
-                shading.color_type = 'RANDOM'   # ランダム色に設定
+                # shading.color_type = 'RANDOM'   # ランダム色に設定
                 shading.show_xray = False       # 例: Xray切替
 
                 return

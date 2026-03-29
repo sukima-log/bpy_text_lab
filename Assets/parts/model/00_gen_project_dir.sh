@@ -35,9 +35,9 @@ mkdir -p "$PROJECT_DIR/d06_shape_key"    # shape_key
 
 # __init__.py 作成
 echo "from . import glb_defs" > "$PROJECT_DIR/glb/__init__.py"
-echo "from . import sample_obj_wrap" > "$PROJECT_DIR/wrap/__init__.py"
+echo "from . import *" > "$PROJECT_DIR/wrap/__init__.py"
 touch "$PROJECT_DIR/wrap/__init__.py"
-echo "from . import sample_obj_mdl" > "$PROJECT_DIR/d00_mdl/__init__.py"
+echo "from . import *" > "$PROJECT_DIR/d00_mdl/__init__.py"
 touch "$PROJECT_DIR/d01_uv_unwrap/__init__.py"
 touch "$PROJECT_DIR/d02_mtal/__init__.py"
 touch "$PROJECT_DIR/d03_bake/__init__.py"

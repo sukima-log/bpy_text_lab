@@ -46,7 +46,7 @@ def active_object_select(object_name_list=[]):
     if bpy.context.object and bpy.context.object.type != 'EMPTY':
         try:
             bpy.ops.object.mode_set(mode=current_mode)
-        except RuntimeError:
+        except Exception:
             pass
 
     return active_obj
@@ -276,7 +276,7 @@ def change_preview(key='SOLID'):
 def object_rotate_func(
         object_list=["mesh"]                        # 回転対象 Object List
     ,   transform_pivot_point='INDIVIDUAL_ORIGINS'  # 回転中心 (ピボットポイント)
-    ,   radians_num=0                               # 回転角度 (度)
+    ,   degrees_num=0                               # 回転角度 (度)
     ,   orient_axis="Z"                             # 回転軸
     ,   orient_type="GLOBAL"                        # 回転軸座標
 ):
@@ -307,7 +307,7 @@ def object_rotate_func(
     # --------------------
     # 自動符号補正（複数オブジェクト同時回転対応）
     # --------------------
-    if radians_num != 0:
+    if degrees_num != 0:
         ref_obj = bpy.data.objects.get(object_list[0])
         if ref_obj:
             # delta 判定用の基準点取得（Mesh or Empty 共通）
@@ -327,7 +327,7 @@ def object_rotate_func(
                 }.get(orient_axis.upper(), Vector((0, 0, offset)))
             orig_co = ref_point.copy()
 
-            # 選択して一時回転（正の radians_num）で Blender の回転方向確認
+            # 選択して一時回転（正の degrees_num）で Blender の回転方向確認
             bpy.ops.object.select_all(action='DESELECT')
             for obj_name in object_list:
                 obj = bpy.data.objects.get(obj_name)
@@ -336,7 +336,7 @@ def object_rotate_func(
             bpy.context.view_layer.objects.active = ref_obj
 
             bpy.ops.transform.rotate(
-                value=math.radians(abs(radians_num)),
+                value=math.radians(abs(degrees_num)),
                 orient_axis=orient_axis,
                 orient_type=orient_type
             )
@@ -360,13 +360,13 @@ def object_rotate_func(
             delta = new_co[idx] - orig_co[idx]
 
             # 符号補正（呼び出し側指定の符号を尊重し、Blender のバージョン差も吸収）
-            desired_sign = 1 if radians_num >= 0 else -1
+            desired_sign = 1 if degrees_num >= 0 else -1
             actual_sign = 1 if delta >= 0 else -1
-            corrected_radians = desired_sign * abs(radians_num) * actual_sign
+            corrected_radians = desired_sign * abs(degrees_num) * actual_sign
 
             # 元に戻す
             bpy.ops.transform.rotate(
-                value=math.radians(-abs(radians_num)),
+                value=math.radians(-abs(degrees_num)),
                 orient_axis=orient_axis,
                 orient_type=orient_type
             )
@@ -399,12 +399,12 @@ def mesh_elements_rotate_customid(
         element_type="FACE",
         custom_ids=[0],
         transform_pivot_point='INDIVIDUAL_ORIGINS',
-        radians_num=0.0,
+        degrees_num=0.0,
         orient_axis="Z",
         orient_type="GLOBAL"
 ):
 
-    if radians_num == 0:
+    if degrees_num == 0:
         return
 
     current_mode = bpy.context.object.mode
@@ -508,11 +508,11 @@ def mesh_elements_rotate_customid(
     # 指定仕様に合わせた補正
     # -------------------------------------------------
 
-    desired_sign = 1 if radians_num > 0 else -1
+    desired_sign = 1 if degrees_num > 0 else -1
 
     # 負→正方向から見て時計回りを正にする
     # Blenderの右ねじ基準と一致させる補正
-    corrected_angle = desired_sign * abs(radians_num) * blender_sign
+    corrected_angle = desired_sign * abs(degrees_num) * blender_sign
 
     # -------------------------------------------------
     # 最終回転
@@ -1030,7 +1030,7 @@ def initialize_transform_apply(
     # 0度ローテーション -> オブジェクトの原点を中心に移動
     object_rotate_func(
         object_list=object_name_list
-    ,   radians_num=0
+    ,   degrees_num=0
     )
     # Change Original Mode
     # Return Mode
@@ -2826,3 +2826,5 @@ def fix_index_extrude_region_move_customid(
             fix_duplicate_ids(obj_name)
     # Change Original Mode
     bpy.ops.object.mode_set(mode=current_mode)
+
+
