@@ -2827,4 +2827,352 @@ def fix_index_extrude_region_move_customid(
     # Change Original Mode
     bpy.ops.object.mode_set(mode=current_mode)
 
+# ========================================================================
+# = ▼ 面に沿わせてオブジェクトを配置
+# ========================================================================
+def apply_tiles_to_face_multi(
+    face_cid            = [0, 1]
+,   base_obj_name       = "base_obj_name"
+,   tiles_obj_name      = "tiles_obj_name"
+,   tiles_anchor_name   = "tiles_anchor_name" + "_anchor"
+):
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+    base_obj = bpy.data.objects.get(base_obj_name)
+    anchor   = bpy.data.objects.get(tiles_anchor_name)
+
+    if base_obj is None:
+        raise RuntimeError(f"{base_obj_name} not found")
+    if anchor is None:
+        raise RuntimeError(f"{tiles_anchor_name} not found")
+
+    # ============================================================
+    # ▼ bmesh
+    # ============================================================
+    bm = bmesh.new()
+    bm.from_mesh(base_obj.data)
+
+    fid_layer = bm.faces.layers.int.get("fid")
+    if fid_layer is None:
+        bm.free()
+        raise RuntimeError("fid レイヤーが必要")
+
+    faces = [f for f in bm.faces if f[fid_layer] in face_cid]
+
+    if not faces:
+        bm.free()
+        raise RuntimeError("face not found")
+
+    mw = base_obj.matrix_world
+
+    # ============================================================
+    # ▼ 法線（平均・ワールド空間）
+    # ============================================================
+    normal = mathutils.Vector((0, 0, 0))
+
+    for f in faces:
+        normal += mw.to_3x3() @ f.normal
+
+    if normal.length == 0:
+        bm.free()
+        raise RuntimeError("normal calc failed")
+
+    normal.normalize()
+
+    # ============================================================
+    # ▼ tangent（固定軸ベース ← ここが安定の鍵）
+    # ============================================================
+    # 基準軸（Zと平行ならXに逃がす）
+    up = mathutils.Vector((0, 0, 1))
+
+    if abs(normal.dot(up)) > 0.999:
+        up = mathutils.Vector((1, 0, 0))
+
+    tangent = up.cross(normal).normalized()
+
+    # ============================================================
+    # ▼ bitangent
+    # ============================================================
+    bitangent = normal.cross(tangent).normalized()
+
+    # ============================================================
+    # ▼ 回転行列
+    # ============================================================
+    rot_mat = mathutils.Matrix((
+        tangent,
+        bitangent,
+        normal
+    )).transposed()
+
+    # ============================================================
+    # ▼ 中心位置（面積重心）
+    # ============================================================
+    center = mathutils.Vector((0, 0, 0))
+    area_sum = 0.0
+
+    for f in faces:
+        c = mw @ f.calc_center_median()
+        a = f.calc_area()
+
+        center += c * a
+        area_sum += a
+
+    if area_sum == 0:
+        bm.free()
+        raise RuntimeError("area calc failed")
+
+    center /= area_sum
+
+    # ============================================================
+    # ▼ 適用（回転＋移動）
+    # ============================================================
+    anchor.matrix_world = (
+        mathutils.Matrix.Translation(center) @
+        rot_mat.to_4x4()
+    )
+
+    bm.free()
+
+# ========================================================================
+# = ▼ 面に沿わせてオブジェクトをカット
+# ========================================================================
+def cut_tiles_by_face_clean(
+    face_cid=[0]
+,   base_obj_name="base_obj_name"
+,   tiles_obj_name="tiles_obj_name"
+):
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+    base_obj  = bpy.data.objects.get(base_obj_name)
+    tiles_obj = bpy.data.objects.get(tiles_obj_name)
+
+    if base_obj is None:
+        raise RuntimeError(f"{base_obj_name} not found")
+    if tiles_obj is None:
+        raise RuntimeError(f"{tiles_obj_name} not found")
+
+    # ============================================================
+    # ▼ 面取得
+    # ============================================================
+    bm = bmesh.new()
+    bm.from_mesh(base_obj.data)
+
+    fid_layer = bm.faces.layers.int.get("fid")
+    if fid_layer is None:
+        bm.free()
+        raise RuntimeError("fid レイヤーが必要")
+
+    faces = [f for f in bm.faces if f[fid_layer] in face_cid]
+
+    if not faces:
+        bm.free()
+        raise RuntimeError("face not found")
+
+    mw = base_obj.matrix_world
+
+    # ============================================================
+    # ▼ 法線
+    # ============================================================
+    normal = mathutils.Vector((0, 0, 0))
+    for f in faces:
+        normal += mw.to_3x3() @ f.normal
+    normal.normalize()
+
+    # ============================================================
+    # ▼ 外周エッジ抽出
+    # ============================================================
+    edge_count = {}
+
+    for f in faces:
+        for e in f.edges:
+            key = tuple(sorted([v.index for v in e.verts]))
+            edge_count[key] = edge_count.get(key, 0) + 1
+
+    boundary_edges = []
+    for f in faces:
+        for e in f.edges:
+            key = tuple(sorted([v.index for v in e.verts]))
+            if edge_count[key] == 1:
+                boundary_edges.append(e)
+
+    # ============================================================
+    # ▼ ループ生成
+    # ============================================================
+    loop = []
+
+    e0 = boundary_edges[0]
+    v_start = e0.verts[0]
+    v_current = e0.verts[1]
+
+    loop.append(mw @ v_start.co)
+    loop.append(mw @ v_current.co)
+
+    used = {e0}
+
+    while len(loop) < len(boundary_edges):
+        for e in boundary_edges:
+            if e in used:
+                continue
+
+            if e.verts[0] == v_current:
+                v_current = e.verts[1]
+            elif e.verts[1] == v_current:
+                v_current = e.verts[0]
+            else:
+                continue
+
+            loop.append(mw @ v_current.co)
+            used.add(e)
+            break
+
+    bm.free()
+
+    # ============================================================
+    # ▼ カッター生成（完全修正版）
+    # ============================================================
+    cutter_mesh = bpy.data.meshes.new("tile_cutter_mesh")
+    cutter_obj  = bpy.data.objects.new("tile_cutter", cutter_mesh)
+    bpy.context.collection.objects.link(cutter_obj)
+
+    bm_cut = bmesh.new()
+
+    # ----------------------------
+    # ベース面
+    # ----------------------------
+    verts = [bm_cut.verts.new(v) for v in loop]
+    face = bm_cut.faces.new(verts)
+
+    # ----------------------------
+    # 押し出し（1回だけ）
+    # ----------------------------
+    extrude = bmesh.ops.extrude_face_region(bm_cut, geom=[face])
+
+    verts_ex = [e for e in extrude["geom"] if isinstance(e, bmesh.types.BMVert)]
+
+    thickness = 1000.0  # 十分大きく
+
+    bmesh.ops.translate(
+        bm_cut,
+        verts=verts_ex,
+        vec=normal * thickness
+    )
+
+    # ----------------------------
+    # 中央に配置（両側カバー）
+    # ----------------------------
+    bmesh.ops.translate(
+        bm_cut,
+        verts=bm_cut.verts,
+        vec=-normal * (thickness * 0.5)
+    )
+
+    # ----------------------------
+    # 法線修正（超重要）
+    # ----------------------------
+    bmesh.ops.recalc_face_normals(bm_cut, faces=bm_cut.faces)
+
+    bm_cut.to_mesh(cutter_mesh)
+    bm_cut.free()
+
+    # ============================================================
+    # ▼ Transform適用（超重要）
+    # ============================================================
+    bpy.context.view_layer.objects.active = tiles_obj
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+
+    bpy.context.view_layer.objects.active = cutter_obj
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+
+    # ============================================================
+    # ▼ Boolean（INTERSECT）
+    # ============================================================
+    bpy.context.view_layer.objects.active = tiles_obj
+    tiles_obj.select_set(True)
+
+    bool_mod = tiles_obj.modifiers.new(name="TileTrim", type='BOOLEAN')
+    bool_mod.operation = 'INTERSECT'
+    bool_mod.object = cutter_obj
+    bool_mod.solver = 'EXACT'
+    bool_mod.use_self = False
+    bool_mod.use_hole_tolerant = True
+
+    bpy.ops.object.modifier_apply(modifier=bool_mod.name)
+
+    # ============================================================
+    # ▼ カッター削除
+    # ============================================================
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+
+# ========================================================================
+# = ▼ 面に沿わせてオブジェクトを貼り付け
+# ========================================================================
+def fit_tiles_to_face(
+    face_cid            = [0, 1]
+,   base_obj_name       = "base_obj_name"
+,   tiles_obj_name      = "tiles_obj_name"
+,   tiles_anchor_name   = "tiles_anchor_name" + "_anchor"
+#   移動
+,   move_local_x        = +0.00
+,   move_local_y        = +0.00
+,   move_local_z        = +0.00
+#   回転
+,   rotate_local_x      = +0.00
+,   rotate_local_y      = +0.00
+,   rotate_local_z      = +0.00
+):
+    # ========================================================================
+    # = ▼ 面に沿わせてオブジェクトを配置
+    # ========================================================================
+    apply_tiles_to_face_multi(
+        face_cid            = face_cid
+    ,   base_obj_name       = base_obj_name
+    ,   tiles_obj_name      = tiles_obj_name
+    ,   tiles_anchor_name   = tiles_anchor_name
+    )
+    # オブジェクト 回転
+    mdl_cm_lib.object_rotate_func(
+        object_list=[tiles_anchor_name]
+    ,   transform_pivot_point='INDIVIDUAL_ORIGINS'
+    ,   degrees_num=rotate_local_x
+    ,   orient_axis="X"
+    ,   orient_type="LOCAL"
+    )
+    mdl_cm_lib.object_rotate_func(
+        object_list=[tiles_anchor_name]
+    ,   transform_pivot_point='INDIVIDUAL_ORIGINS'
+    ,   degrees_num=rotate_local_y
+    ,   orient_axis="Y"
+    ,   orient_type="LOCAL"
+    )
+    mdl_cm_lib.object_rotate_func(
+        object_list=[tiles_anchor_name]
+    ,   transform_pivot_point='INDIVIDUAL_ORIGINS'
+    ,   degrees_num=rotate_local_z
+    ,   orient_axis="Z"
+    ,   orient_type="LOCAL"
+    )
+    # Mode切り替え
+    bpy.ops.object.mode_set(mode='OBJECT')
+    active_object_select(object_name_list=[tiles_anchor_name])
+    # オブジェクト 移動
+    bpy.ops.transform.translate(
+        value=(
+            move_local_x
+        ,   move_local_y
+        ,   move_local_z
+        )
+    ,   orient_type='LOCAL'
+    )
+    # ========================================================================
+    # = ▼ 面に沿わせてオブジェクトをカット
+    # ========================================================================
+    cut_tiles_by_face_clean(
+        face_cid=face_cid
+    ,   base_obj_name=base_obj_name
+    ,   tiles_obj_name=tiles_obj_name
+    )
+    # 重複IDを座標順で修正
+    mdl_cm_lib.fix_duplicate_ids(tiles_obj_name)
+
 
