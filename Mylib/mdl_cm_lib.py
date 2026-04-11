@@ -3175,4 +3175,79 @@ def fit_tiles_to_face(
     # 重複IDを座標順で修正
     mdl_cm_lib.fix_duplicate_ids(tiles_obj_name)
 
+# ========================================================================
+# 同じcustomIDの全頂点を取得
+# ========================================================================
+def get_all_vertices_by_vid(obj_name, target_vid):
+    obj = bpy.data.objects[obj_name]
 
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+
+    vid_layer = bm.verts.layers.int.get("vid")
+    if not vid_layer:
+        bm.free()
+        return []
+
+    points = []
+
+    for v in bm.verts:
+        if v[vid_layer] == target_vid:
+            world = obj.matrix_world @ v.co
+            points.append((world.x, world.y, world.z))
+
+    bm.free()
+    return points
+
+# ========================================================================
+# 傾き（回転角）を求める（任意軸対応）
+# ========================================================================
+def compute_flatten_rotation_angle(points, target_axis='Z', rotate_axis='X'):
+    """
+    target_axis: 揃えたい軸 ('X','Y','Z')
+    rotate_axis: 回転軸 ('X','Y','Z')
+    """
+
+    if len(points) < 2:
+        return 0.0
+
+    # 軸インデックス
+    axis_map = {'X': 0, 'Y': 1, 'Z': 2}
+
+    t = axis_map[target_axis]
+    r = axis_map[rotate_axis]
+
+    # 回転軸に応じて使う2軸を決定
+    # X回転 → YZ
+    # Y回転 → XZ
+    # Z回転 → XY
+    plane_axes = {
+        0: (1, 2),
+        1: (0, 2),
+        2: (0, 1)
+    }
+
+    a1, a2 = plane_axes[r]
+
+    # target_axisがa2になるように並び替え
+    if t == a1:
+        a1, a2 = a2, a1
+
+    # 最小二乗で傾き計算
+    sum_x = sum(p[a1] for p in points)
+    sum_y = sum(p[a2] for p in points)
+    sum_xx = sum(p[a1] * p[a1] for p in points)
+    sum_xy = sum(p[a1] * p[a2] for p in points)
+
+    n = len(points)
+
+    denom = (n * sum_xx - sum_x * sum_x)
+    if abs(denom) < 1e-8:
+        return 0.0
+
+    slope = (n * sum_xy - sum_x * sum_y) / denom
+
+    # 傾き → 角度
+    angle_rad = math.atan(slope)
+
+    return -math.degrees(angle_rad)
