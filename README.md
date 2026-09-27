@@ -1,4 +1,4 @@
-# 🧱 bpy_text_lab : BPY Text-Based 3D Modeling
+# bpy_text_lab : BPY Text-Based 3D Modeling
 
 **Blender Python API（BPY）を用いた、フルテキストベースの 3D CG デザイン環境**
 
@@ -15,13 +15,14 @@ Blender上でのすべての操作を Python スクリプトで制御するこ�
 
 ---
 
-## 📦 Project Structure
+## Project Structure
 ```
 Git Root
 .
 ├── Add_on
 │   └── persistent_id_overlay_fully.py  // カスタムID表示のためのAdd_on
 ├── Assets
+│   ├── main.py                         // プロジェクト切替エントリポイント (★これをBlenderで実行)
 │   ├── mdl
 │   │   ├── 00_gen_project_dir.sh       // プロジェクトを生成するためのスクリプト
 │   │   └── SAMPLE_MODEL                // サンプルプロジェクトディレクトリ
@@ -35,7 +36,7 @@ Git Root
 │   │       ├── d06_shape_key               // シェイプキー作業ディレクトリ
 │   │       ├── glb                         // グローバルファイル格納ディレクトリ
 │   │       ├── __init__.py                 // プロジェクト外流用用
-│   │       ├── main.py                     // Mainファイル (★これをBlenderで実行)
+│   │       ├── main.py                     // プロジェクト本体 (Assets/main.py から呼び出される)
 │   │       ├── README.md                   // README
 │   │       └── wrap                        // 上記作業整理用ファイル格納ディレクトリ
 │   └── parts
@@ -49,13 +50,19 @@ Git Root
 │   ├── common_top.py                       // 共通ファイルトップ(ライブラリのインポート等)
 │   ├── common_top_sub_template.py          // 00_gen_project_dir.sh で用いるファイル
 │   └── common_wrap_template.py             // 00_gen_project_dir.sh で用いるファイル
+├── CONTRIBUTING.md                     // モデル制作ルール・コーディング規約
 ├── LICENSE                             // ライセンスファイル
 ├── Mylib                               // 自作共通関数とりまとめ
 │   ├── ani_cm_lib.py                       // アニメーション用
+│   ├── asset_delivery_validation.py        // GLBエクスポート/再インポートのラウンドトリップ検証
+│   ├── claude_preview_lib.py               // AIエージェント向けプレビュー画像・品質レポート生成
 │   ├── cm_lib.py                           // Blender/bpy環境設定用
 │   ├── mdl_cm_lib.py                       // モデリング用
+│   ├── mesh_source_io.py                   // メッシュのテキスト形式(JSON Lines)入出力
 │   ├── mm_cm_lib.py                        // その他
-│   └── mtal_cm_lib.py                      // マテリアル/テクスチャ用
+│   ├── mtal_cm_lib.py                      // マテリアル/テクスチャ用
+│   ├── part_primary_form_gate.py           // パーツ単位の一次形状品質ゲート
+│   └── semantic_part_snapshot.py           // パーツ別スナップショット検証
 ├── Output                              // モデルの出力用
 │   └── exports
 ├── PROMPTS.md                          // 生成AI用のプロンプト保存場所 (フリースペース)
@@ -76,21 +83,22 @@ Git Root
 
 ---
 
-## 🎁 Sample Model
+## Sample Model
 
 このリポジトリに含まれる **「SAMPLE_MODEL」** から生成できるサンプルモデルを以下で確認できます。
 
-👉 [サンプルモデルを表示する](https://sukima-log.github.io/Pages_bpy-text-lab_sample/)
+[サンプルモデルを表示する](https://sukima-log.github.io/Pages_bpy-text-lab_sample/)
 （作成できる3Dモデルの例を確認できます）
 
 
-## 🧩 Supported Versions
+## Supported Versions
 
-- **Blender 4.2** : commit 4014d1d17bd2cfa20d29ac3aa5050f1931dab847 以前
+- **Blender 5.2.0 LTS** : 正式ベースライン（現行推奨）
 - **Blender 5.01** : Stable 環境で動作確認
+- **Blender 4.2** : commit 4014d1d17bd2cfa20d29ac3aa5050f1931dab847 以前
 ---
 
-## ⚙️ Setup
+## Setup
 
 1. **Blender** をインストール  
 
@@ -100,7 +108,15 @@ Git Root
 
 ---
 
-## 🚀 Create New Project
+## Running a Project
+
+1. `Assets/main.py` をBlenderのテキストエディタで開きます。
+2. ファイル内の「プロジェクト切替」ブロックで、実行したいプロジェクトの `from Assets.mdl.<PROJECT_NAME> import main` 行のコメントを外し、他の行はコメントアウトしたままにします（有効化するのは常に1行のみ）。
+3. Alt+P（Run Script）で実行します。
+
+初期状態では `SAMPLE_MODEL` が有効になっているため、そのまま実行するとサンプルモデルが生成されます。
+
+## Create New Project
 
 1. 以下を実行してプロジェクトを生成します。
 
@@ -110,14 +126,18 @@ Git Root
 例: `./Assets/mdl/00_gen_project_dir.sh SAMPLE_PROJECT`
 Assets/mdl/ 以下に、空のプロジェクト構成が生成されます。
 
-## 🖥️ Blender Workspaces
+2. `Assets/main.py` に生成したプロジェクトの import 行を追加し、有効化してから実行します。
+
+モデルの作り方・配置ルールなど詳しい制作ガイドラインは [CONTRIBUTING.md](./CONTRIBUTING.md) を参照してください。
+
+## Blender Workspaces
 主に以下のワークスペースを使用します：
 
-- 🟣 UV Editing
-- 🟢 Shading
-- 🔵 Animation
+- UV Editing
+- Shading
+- Animation
 
-## 🧭 Blender Workflow
+## Blender Workflow
 
 ```
 
@@ -143,7 +163,7 @@ glTF / glb エクスポート
 ```
 
 
-## 🎨 Texture Types
+## Texture Types
 
 | 名称                   | 別名         | 説明            | 注意点            |
 | -------------------- | ---------- | ------------- | -------------- |
@@ -152,7 +172,7 @@ glTF / glb エクスポート
 | ノーマルマップ (NORMAL)     | 法線マップ      | 疑似的な凹凸感を付与    | 色空間を「非カラー」に設定  |
 | ディスプレイスメントマップ (DISP) | -          | メッシュ形状を実際に変形  | Eevee対応済・処理負荷大 |
 
-## 🎞️ Animation Overview
+## Animation Overview
 | 機能名	| 対象	| 仕組み	| 主な用途	| glTF上での名前 |
 |----------|----------|----------|----------|----------|
 | シェイプキー (Shape Key)	| 頂点（Vertex）	| 頂点位置を直接補間	| 表情・細かい変形	| Morph | Target |
@@ -168,21 +188,21 @@ glTF / glb エクスポート
    └─ アニメーション ... 時間軸で制御（例：歩行・瞬き）
 ```
 
-- 💡 リグ (Rig): ボーンを効率的に制御する仕組み。複数ボーンを一括制御可能。
-- ▶️ 再生: [Space] キーでアニメーションを再生。
+- リグ (Rig): ボーンを効率的に制御する仕組み。複数ボーンを一括制御可能。
+- 再生: [Space] キーでアニメーションを再生。
 
-## 📤 Model Export
+## Model Export
 モデル出力スクリプト:
 
 ```
 Tools/Export/export_glb_gltf.py
 ```
 
-## ⚠️ Disclaimer
+## Disclaimer
 - 本リポジトリを利用したことによる損害・不利益について、作者は一切の責任を負いません。すべて自己責任でご利用ください。
 - 改良提案・フィードバックを歓迎します。
 
-## 📜 利用規約 / License
+## 利用規約 / License
 
 - **Blender**
     - 本プロジェクトは **Blender**（[https://www.blender.org/](https://www.blender.org/)）を利用して制作されています。  
@@ -198,7 +218,7 @@ Tools/Export/export_glb_gltf.py
 - **Repository**
     - This project is licensed under the **MIT License** — see the [LICENSE](./LICENSE) file for details.
 
-## 📚 References
+## References
 （今後追記予定）
 
 
@@ -206,6 +226,7 @@ Tools/Export/export_glb_gltf.py
 |---------|------------|---------|--------------------------------------|-----------|
 | 0.1   | 2025-11-03 | Added   | 動作確認版 | sukimalog.com |
 | 0.2   | 2026-01-10 | Update   | Blender 5.01 (Stable) 対応<br>カスタムID版へ更新<br>カスタムID版 : Add_on 追加<br>インデックス版で発生していた頂点/辺/面削除時のインデックス再振り直し問題を回避<br>GPU設定を追加 | sukimalog.com |
+| 0.3   | 2026-09-27 | Update   | Blender 5.2.0 LTS 対応（Mylib 内 API 更新）<br>Mylib に mesh_source_io / part_primary_form_gate / semantic_part_snapshot / asset_delivery_validation / claude_preview_lib を追加<br>Assets/main.py によるプロジェクト切替方式（スイッチボード）を導入<br>CONTRIBUTING.md を新設し制作ルールを明文化 | sukimalog.com |
 | x.x.x   | xxxx-xx-xx | xxxxx   | xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx | |
 
 

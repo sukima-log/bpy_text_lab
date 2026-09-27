@@ -18,51 +18,51 @@ from Common.common_top import *
 cm_lib._auto_reload_modules([Mylib, common_top])
 #========================================================================================
 
-# ==================================================================
-# = Pre Process
-# ==================================================================
-modules = cm_lib.import_submodules(f"Assets.mdl.SAMPLE_MODEL") 
-parts = cm_lib.import_submodules("Assets.parts")
+def main():
+    # ==================================================================
+    # = Pre Process
+    # ==================================================================
+    modules = cm_lib.import_submodules(f"Assets.mdl.SAMPLE_MODEL")
+    parts = cm_lib.import_submodules("Assets.parts")
 
-globals().update(modules)
+    globals().update(modules)
 
-reload_list = list(modules.values()) + list(parts.values())
+    reload_list = list(modules.values()) + list(parts.values())
 
-# --- 環境初期化 ---
-override_common = mm_cm_lib.bpy_modeling_initialize_common(
-    reload_list=reload_list,
-    rm_flg=False    # Object Delete Disable
-)
-
-# ==================================================================
-# = ▼ Instance
-# ==================================================================
-
-# --------------------------------
-# Base Light 作成 & 配置
-# --------------------------------
-if (mm_cm_lib.glb_exist_obj_chk(obj_list=[glb.glb_defs.base_light], EXIST_FLAG_DICT=glb.glb_defs.EXIST_FLAG_DICT, gen_flag=True)):
-    # ポイントライト追加
-    bpy.ops.object.light_add(
-        type='POINT'
-    ,   radius=1
-    ,   align='WORLD'
-    ,   location=(-3, -3, 3)
-    ,   scale=(1, 1, 1)
+    # --- 環境初期化 ---
+    override_common = mm_cm_lib.bpy_modeling_initialize_common(
+        reload_list=reload_list
+    ,   rm_flg=False    # Object Delete Disable
     )
-    # 名前設定
-    bpy.context.object.name = glb.glb_defs.base_light
-    # パワー変更
-    bpy.context.object.data.energy = 50000
-    # 半径設定
-    bpy.context.object.data.shadow_soft_size = 10
 
-# アクティブオブジェクト
-mdl_cm_lib.active_object_select(
-    object_name_list=[glb.glb_defs.base_light]
-)
+    # ==================================================================
+    # = ▼ Instance
+    # ==================================================================
 
-if (1):
+    # --------------------------------
+    # Base Light 作成 & 配置
+    # --------------------------------
+    if (mm_cm_lib.glb_exist_obj_chk(obj_list=[glb.glb_defs.base_light], EXIST_FLAG_DICT=glb.glb_defs.EXIST_FLAG_DICT, gen_flag=True)):
+        # ポイントライト追加
+        bpy.ops.object.light_add(
+            type='POINT'
+        ,   radius=1
+        ,   align='WORLD'
+        ,   location=(-3, -3, 3)
+        ,   scale=(1, 1, 1)
+        )
+        # 名前設定
+        bpy.context.object.name = glb.glb_defs.base_light
+        # パワー変更
+        bpy.context.object.data.energy = 50000
+        # 半径設定
+        bpy.context.object.data.shadow_soft_size = 10
+
+    # アクティブオブジェクト
+    mdl_cm_lib.active_object_select(
+        object_name_list=[glb.glb_defs.base_light]
+    )
+
     # --------------------------------
     # sample_obj 作成 & 配置
     # --------------------------------

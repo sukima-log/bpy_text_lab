@@ -63,6 +63,88 @@ def allocate_material(
     bpy.ops.object.material_slot_assign()
 
 
+# ==================================================================
+# ▼ 新規マテリアル追加 または 既存マテリアル割り当て (存在確認して自動切替)
+# ==================================================================
+def add_new_material_or_allocate_material(
+    material_name="Base_Material_Name"
+):
+    # 既存マテリアルの有無を確認
+    if bpy.data.materials.get(material_name) is None:
+        # 未登録: 新規マテリアル追加
+        add_new_material(material_name=material_name)
+    else:
+        # 登録済み: 既存マテリアル割り当て
+        allocate_material(material_name=material_name)
+
+
+# ==================================================================
+# ▼ マテリアルの ノード構成 (テクスチャ組み) 済みチェック
+# ==================================================================
+def mtal_node_configured_chk(
+    material_name       = "Base_Material_Name"   # チェック対象マテリアル名
+):
+    """
+    同じマテリアル名 (例: glb.glb_defs.MT_CONCRETE_00) を 複数のオブジェクトの
+    マテリアル設定関数 (concrete_00_mtal 等) から 共有して呼び出す構成のとき、
+    2つ目以降の呼び出しで ノードグラフが 二重に 追加されてしまうのを防ぐための
+    事前チェック。
+
+    マテリアル自体は UV展開時の add_new_material_or_allocate_material 等で
+    先に作成/オブジェクトへの割り当てが済んでいる前提のため、この関数は
+    「マテリアルが存在するか」ではなく「そのマテリアルの生成関数が
+    既に一度実行され、ノードが組まれているか」を判定する。
+
+    判定フラグは material.node_tree 側の カスタムプロパティに 立てる
+    (material 自体には 立てない)。理由は 2つ:
+      1. Python側の 辞書等で 状態管理すると、Blenderセッションを跨いだ
+         場合や、削除されずに残っている 他モデル使用中のマテリアルとの
+         整合が 取れなくなる (bpy.data 上の 実体と 食い違う) おそれがある。
+         material.node_tree の カスタムプロパティなら bpy.data 側の
+         実体そのものなので、常に 正しい状態を 反映する。
+      2. material 自体に カスタムプロパティを 立てると、
+         export_glb_gltf.py の export_extras=True により glTFの extras へ
+         そのまま書き出されてしまう。glTFエクスポータ (io_scene_gltf2) は
+         カメラ/オブジェクト/メッシュ/ボーン/ライト/アクション/シーン/
+         マテリアル本体の extras は 収集するが、material.node_tree の
+         カスタムプロパティは 一切 参照しないため (実機の
+         io_scene_gltf2/blender/exp/material/material_utils.py 等で
+         確認済み)、ここに立てれば エクスポート結果に 混入しない。
+
+    Input:
+        material_name (str): チェック対象のマテリアル名
+    Output:
+        bool: True  = 未構成 (これから ノード構成を 実行すべき)
+              False = 構成済み (ノード構成を スキップすべき)
+    """
+    material = bpy.data.materials.get(material_name)
+    if (material is None) or (material.node_tree is None):
+        return True
+    return (not material.node_tree.get("mtal_node_configured", False))
+
+
+# ==================================================================
+# ▼ マテリアルに ノード構成 済みフラグを 立てる
+# ==================================================================
+def mtal_node_configured_set(
+    material_name       = "Base_Material_Name"   # フラグを立てる対象マテリアル名
+):
+    """
+    マテリアル設定関数 (concrete_00_mtal 等) が ノード構成を 完了した際、
+    末尾で呼び出す。mtal_node_configured_chk が参照する
+    material.node_tree のカスタムプロパティに フラグを立てる。
+    True を 再代入するだけなので、複数箇所から 呼ばれても 問題ない。
+
+    Input:
+        material_name (str): フラグを立てる対象のマテリアル名
+    Output:
+        None (副作用: material.node_tree["mtal_node_configured"] = True を 設定)
+    """
+    material = bpy.data.materials.get(material_name)
+    if (material is not None) and (material.node_tree is not None):
+        material.node_tree["mtal_node_configured"] = True
+
+
 
 # ==================================================================
 # ▼ テクスチャ追加
@@ -700,7 +782,7 @@ def bake_image_save(
     bpy.context.scene.cycles.samples = samples
     bpy.context.scene.cycles.preview_samples = 64
     bpy.context.scene.cycles.use_adaptive_sampling = True
-    bpy.context.scene.cycles.use_denoising = False
+    bpy.context.scene.cycles.use_denoising = True
     # ------------------------------------
     # Bake Setting
     # ------------------------------------

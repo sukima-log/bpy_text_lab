@@ -90,12 +90,13 @@ def update_3d_view_overlay():
                 overlay.show_vertex_normals     = False # 頂点法線表示
                 overlay.show_edge_seams         = True  # エッジシーム（接合部表示）
                 overlay.show_extra_indices      = False  # インデックス（面,エッジなど）表示
-                overlay.show_face_orientation   = True  # 面 向き表示
+                overlay.show_face_orientation   = False  # 面 向き表示
                 overlay.show_stats              = True  # メッシュ情報
 
                 # ---- Shading settings ----
                 shading = space.shading
-                # shading.color_type = 'RANDOM'   # ランダム色に設定
+                shading.color_type = 'RANDOM'   # ランダム色に設定
+                # shading.color_type = 'MATERIAL'   # MATERIAL
                 shading.show_xray = False       # 例: Xray切替
 
                 return
@@ -109,9 +110,19 @@ def preferences_setting():
     # bpy.context.preferences.inputs.view_rotate_sensitivity = 1.5
     # Orbit Around Selection（選択周囲 オービット）
     bpy.context.preferences.inputs.use_rotate_around_active = True
-    # Depthオプション有効
-    # bpy.context.preferences.inputs.use_auto_depth = True
-    # Depthオプション有効
+    # Depthオプション有効 (= マウスカーソル位置を 視点回転 / ズーム の中心 に使う)
+    # 修正 (2026-05-07):
+    #   Blender 5.0 で プロパティ名 が変更された:
+    #     旧 (Blender 4.x 以前): use_auto_depth
+    #     新 (Blender 5.0 以降): use_mouse_depth_navigate
+    #   UI 上のラベル は 共に "Depth" (Preferences > Navigation > Auto > Depth)。
+    #   両方の名前 を try/except で対応 して 4.x / 5.x 互換 とする。
+    _inputs = bpy.context.preferences.inputs
+    if hasattr(_inputs, "use_mouse_depth_navigate"):
+        _inputs.use_mouse_depth_navigate = True   # Blender 5.0 以降
+    elif hasattr(_inputs, "use_auto_depth"):
+        _inputs.use_auto_depth = True             # Blender 4.x 以前
+    # Zoom to Mouse (= マウスホイール ズーム時 カーソル位置を ズーム中心 に使う)
     bpy.context.preferences.inputs.use_zoom_to_mouse = True
     # Smooth View（スムースビュー）時間（ミリ秒単位）
     bpy.context.preferences.view.smooth_view = 200
@@ -647,6 +658,18 @@ def glb_exist_obj_chk(obj_list=["object_name"], EXIST_FLAG_DICT=None, gen_flag=F
     - gen_flag に応じて辞書の参照/更新
     """
 
+    # ================================================================
+    # = 差分実行ログ 出力切替フラグ
+    # =   True  : 「再生成が必要」と判定するたびに、obj_list と欠落要素を
+    # =           標準出力へ1行ログ出力する
+    # =   False : ログを一切出力しない
+    # =   --------------------------------------------------------------
+    # =   使い方: 初回実行ではほぼ全ての obj_list が欠落し大量にログが出る。
+    # =   2回目以降は差分実行が効くブロックのログが消えるため、毎回出続ける
+    # =   obj_list = 毎回再生成されている箇所、として即座に特定できる。
+    # ================================================================
+    GEN_LOG_ENABLE = False
+
     if not isinstance(obj_list, list):
         print("Error: data is not a list. Program will exit.")
 
@@ -682,6 +705,20 @@ def glb_exist_obj_chk(obj_list=["object_name"], EXIST_FLAG_DICT=None, gen_flag=F
                         arm.data.edit_bones.remove(eb)
                     bpy.ops.object.mode_set(mode='OBJECT')
 
+    def _gen_log(missing_list, gen_flag_value):
+        # 「再生成が必要」と判定したときにログを1行出力するヘルパー
+        # Input:
+        #   missing_list   : list[str]  存在せず、再生成の原因となったオブジェクト名のリスト
+        #   gen_flag_value : bool       呼び出し時の gen_flag（ログに種別を併記する用途）
+        # Output:
+        #   なし（GEN_LOG_ENABLE が True のときのみ標準出力へ print する）
+        if not GEN_LOG_ENABLE:
+            return
+        print(
+            f"[GEN_CHK] 再生成(gen_flag={gen_flag_value})"
+            f"  欠落={missing_list} | obj_list={obj_list}"
+        )
+
     # --- 存在チェック ---
     exist_flags = []
     for name in obj_list:
@@ -695,7 +732,14 @@ def glb_exist_obj_chk(obj_list=["object_name"], EXIST_FLAG_DICT=None, gen_flag=F
     # --- gen_flag = True の場合 ---
     if gen_flag:
         # どれか1つでも存在しなければ True（生成フラグ）
-        if not all(exist_flags):
+        need_regen = not all(exist_flags)
+        if need_regen:
+            # 欠落しているオブジェクト名を抽出（ログ用 = 再生成の原因）
+            missing_list = [
+                name for name, flag in zip(obj_list, exist_flags) if not flag
+            ]
+            # 再生成ログ 出力
+            _gen_log(missing_list=missing_list, gen_flag_value=True)
             # 存在しない場合、obj_list 全削除
             for name in obj_list:
                 delete_object_or_bone(name)
@@ -708,25 +752,33 @@ def glb_exist_obj_chk(obj_list=["object_name"], EXIST_FLAG_DICT=None, gen_flag=F
         for name in obj_list:
             EXIST_FLAG_DICT[(name,)] = object_exists(name) or bone_exists(name)
 
-        # 戻り値（削除があったか）
-        return not all(exist_flags)
+        # 戻り値（削除があったか = 再生成が必要だったか）
+        return need_regen
 
     # --- gen_flag = False の場合 ---
     else:
+        # 判定ロジックは従来と完全に等価:
+        #   (1) グループキーが存在し True             → False（再生成不要）
+        #   (2) それ以外で 単品キーが全て True         → False（再生成不要）
+        #   (3) 上記以外                              → True （再生成必要）
         key = tuple(obj_list)
-        if key in EXIST_FLAG_DICT:
-            if EXIST_FLAG_DICT[key]:
-                return False  # グループとしてすでに存在していた
-            else:
-                # 単品でも全て存在していれば False を返す
-                if all(EXIST_FLAG_DICT.get((name,), False) for name in obj_list):
-                    return False  # 全て単品で存在している
-                return True       # どれか欠けている
+        if key in EXIST_FLAG_DICT and EXIST_FLAG_DICT[key]:
+            result = False  # グループとしてすでに存在していた
+        elif all(EXIST_FLAG_DICT.get((name,), False) for name in obj_list):
+            result = False  # 全て単品で存在している
         else:
-            # グループキーが無い場合でも、単品キーを調べる
-            if all(EXIST_FLAG_DICT.get((name,), False) for name in obj_list):
-                return False      # 全て単品で存在している
-            return True           # どれか欠けている
+            result = True   # どれか欠けている → 再生成必要
+
+        if result:
+            # 辞書上で「存在しない」と記録されている要素 = 欠落（再生成の原因）
+            missing_list = [
+                name for name in obj_list
+                if not EXIST_FLAG_DICT.get((name,), False)
+            ]
+            # 再生成ログ 出力
+            _gen_log(missing_list=missing_list, gen_flag_value=False)
+
+        return result
 
 def reset_exist_flag_dict(EXIST_FLAG_DICT=None):
     EXIST_FLAG_DICT.clear()  # 中身だけ空にする
@@ -761,8 +813,8 @@ def join_objects(obj_list, join_name="Joined_Object"):
         print("[WARN] join_objects: 有効なオブジェクトが見つかりません。")
         return None
 
-    if missing_objs:
-        print(f"[WARN] 以下のオブジェクトが存在しません: {missing_objs}")
+    # if missing_objs:
+    #     print(f"[WARN] 以下のオブジェクトが存在しません: {missing_objs}")
 
     # -------------------------------------------------------------
     # 結合実行
@@ -793,6 +845,8 @@ def join_objects(obj_list, join_name="Joined_Object"):
     
     # 重複IDを座標順で修正
     mdl_cm_lib.fix_duplicate_ids(join_name)
+    # 全適用
+    mdl_cm_lib.initialize_transform_apply(join_name)
 
     # -------------------------------------------------------------
     # 元のモードに戻す
@@ -812,12 +866,18 @@ def remove_empty_without_children():
     """
     子オブジェクトを1つも持たない Empty を削除する
     ※ Image Empty は除外
+    ※ 親を持つ Empty も除外
+      （_upper_anchor / _lower_anchor のように、子は持たないが
+        既存の親子階層の一部として意味を持つ「葉ノードのアンカー」を
+        誤って削除しないようにするため。
+        削除対象はあくまで「親も子も持たない、完全に孤立した一時 Empty」のみ）
     """
     empties_to_remove = [
         obj for obj in bpy.data.objects
         if obj.type == 'EMPTY'
         and obj.empty_display_type != 'IMAGE'
         and len(obj.children) == 0
+        and obj.parent is None
     ]
 
     if not empties_to_remove:

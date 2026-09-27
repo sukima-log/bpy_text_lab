@@ -82,15 +82,35 @@ def import_submodules(package_name):
     例：
         modules = import_submodules("Assets.mdl.SAMPLE_MODEL")
         → modules["d00_mdl"] でアクセス可能
+
+    再帰深度抑制 (重要):
+        多数のサブモジュールが冒頭で import_submodules("Assets.parts") を呼ぶ構造の場合、
+        Python が「ファイル A の冒頭 → import_submodules → ファイル B の import →
+        その冒頭で import_submodules → ファイル A 再 import (sys.modules 経由)」
+        と再帰的に呼び出される。 importlib.import_module は sys.modules に
+        部分初期化中の module が存在してもそれを返すが、 大量の循環呼び出しが続くと
+        Python の RecursionError を引き起こす。
+        対策として sys.modules に既に登録されている module は import_module を再呼出せず、
+        sys.modules から直接取得する (Python の標準挙動と等価だが、 余計な C スタック消費を
+        節約できる)。
     """
     package = importlib.import_module(package_name)
     results = {}
 
     for loader, name, ispkg in pkgutil.walk_packages(package.__path__, package.__name__ + "."):
-        try:
-            mod = importlib.import_module(name)
-            short_name = name.split(".")[-1]
-            results[short_name] = mod
-        except Exception as e:
-            print(f"[WARN] Failed to import {name}: {e}")
+        # 既に sys.modules に存在するなら importlib.import_module を呼ばずに直接取得
+        # (再帰的呼び出しによるスタック消費を抑える)
+        if name in sys.modules:
+            mod = sys.modules[name]
+        else:
+            try:
+                mod = importlib.import_module(name)
+            except Exception as e:
+                print(f"[WARN] Failed to import {name}: {e}")
+                continue
+        short_name = name.split(".")[-1]
+        # main除外
+        if short_name == "main":
+            continue
+        results[short_name] = mod
     return results

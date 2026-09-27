@@ -73,7 +73,7 @@ def sukima_logo_bake(
                 obj_name=obj_name
             ,   bake_image_name=bake_image_name
             ,   bake_type=bk_list[i]
-            ,   image_path=script_dir + "/bake_texture/" + obj_name + "/" + obj_name + "_" + bk_list[i] + ".png"
+            ,   image_path=os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/bake_texture/" + obj_name + "/" + obj_name + "_" + bk_list[i] + ".png"
             ,   file_format="PNG"
             ,   margin=16
             ,   samples=256
